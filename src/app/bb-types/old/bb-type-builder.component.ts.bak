@@ -1,0 +1,1018 @@
+
+import { Component, EventEmitter, Output, Input, OnInit, OnDestroy, forwardRef, HostListener } from '@angular/core';
+import { CommonModule } from '@angular/common';
+import { FormsModule } from '@angular/forms';
+import { BBTypeService } from '../services/bb-type.service';
+import { BBType, BBSettingDefinition, BBEditor, BBField, BBTypeBase, IDString, BBSettingOverride } from '../models/bb-types';
+import { AppConfig } from '../models/app-models';
+
+import { DynamicFieldComponent } from '../shared/dynamic-field.component';
+import { BBTypeBuilderComponent as Self } from './bb-type-builder.component';
+import { PublishedSettingsTabComponent } from './tabs/published-settings-tab.component';
+import { TypeOverridesTabComponent } from './tabs/type-overrides-tab.component';
+import { TypeEditorsTabComponent } from './tabs/type-editors-tab.component';
+
+@Component({
+  selector: 'app-bb-type-builder',
+  standalone: true,
+  imports: [CommonModule, FormsModule, PublishedSettingsTabComponent, TypeOverridesTabComponent, TypeEditorsTabComponent, DynamicFieldComponent, forwardRef(() => Self)],
+  template: `
+    <div class="builder-container">
+      @if (showHeader) {
+        <div class="header-row" style="display: flex; justify-content: space-between; align-items: center; padding-bottom: 20px;">
+            <h3 style="margin: 0;">{{ editingType ? 'Edit Type: ' + editingType.name : 'Create New Type' }}</h3>
+            <button class="close-btn" (click)="cancel.emit()">✕</button>
+        </div>
+      }
+      
+      <nav class="builder-tabs">
+        <button [class.active]="activeTab === 'definition'" (click)="activeTab = 'definition'">Type Definition</button>
+        <button [class.active]="activeTab === 'publishedSettings'" (click)="activeTab = 'publishedSettings'">Published Settings</button>
+        <button [class.active]="activeTab === 'overrides'" (click)="activeTab = 'overrides'">Overrides</button>
+        <button [class.active]="activeTab === 'editors'" (click)="activeTab = 'editors'">Editors</button>
+      </nav>
+
+      <div class="tab-content">
+        @if (activeTab === 'definition') {
+          <div class="definition-tab" style="padding-top: 10px;">
+            <!-- header -->
+            @if (!isAnonymousMode) {
+              <div class="form-row" style="margin-bottom: 10px;">
+                  <label class="sys-h4">
+                      Type Name:
+                      <input type="text" [(ngModel)]="newType.name" placeholder="e.g. My Custom List">
+                  </label>
+                  
+                  <label class="sys-h4">
+                      Based On:
+                      <select [(ngModel)]="basedOnType" (change)="onBasedOnTypeChange()">
+                          <option value="string">String</option>
+                          <option value="number">Number</option>
+                          <option value="boolean">Boolean</option>
+                          <option value="file">File</option>
+                          <option value="date">Date</option>
+                          <option value="dict">Dict</option>
+                          <option value="list-base">List</option>
+                          <option value="struct-base">Struct</option>
+                      </select>
+                  </label>
+              </div>
+            }
+
+            
+            <hr>
+            
+            <!-- Type Configuration Section -->
+            @if (basedOnType === 'string' || basedOnType === 'number' || basedOnType === 'boolean') {
+              <div class="config-section">
+                  <div class="type-config-header sys-h4">{{ getSystemTypeName(basedOnType) }} Configuration</div>
+                  
+                  <!-- Type Settings -->
+                  <div class="type-settings">
+                    @if (basedOnType === 'string') {
+                      <div class="setting-group">
+                        <label>Allowed Values:</label>
+                        <div class="values-list">
+                          @for (val of newType.values || []; track $index) {
+                            <div class="flex-row">
+                              <input type="text" [(ngModel)]="val.id" placeholder="ID" style="width: 80px">
+                              <input type="text" [(ngModel)]="val.text" placeholder="Display Text">
+                              <button class="icon-btn delete" (click)="removeValue($index)">🗑️</button>
+                            </div>
+                          }
+                          <button class="add-btn small" (click)="addValue()">+ Add Value</button>
+                        </div>
+                      </div>
+                      
+                      <div class="setting-item">
+                        <label>Min Length:</label>
+                        <input type="number" [(ngModel)]="newType.minLen">
+                      </div>
+                      <div class="setting-item">
+                        <label>Min Length Message:</label>
+                        <input type="text" [(ngModel)]="newType.minLenMsg">
+                      </div>
+                      <div class="setting-item">
+                        <label>Max Length:</label>
+                        <input type="number" [(ngModel)]="newType.maxLen">
+                      </div>
+                      <div class="setting-item">
+                        <label>Max Length Message:</label>
+                        <input type="text" [(ngModel)]="newType.maxLenMsg">
+                      </div>
+                    }
+                    
+                    @if (basedOnType === 'number') {
+                      <div class="setting-item">
+                        <label>Allow Decimals:</label>
+                        <input type="checkbox" [(ngModel)]="newType.allowDecimals">
+                      </div>
+                      <div class="setting-item">
+                        <label>Allow Negative:</label>
+                        <input type="checkbox" [(ngModel)]="newType.allowNegative">
+                      </div>
+                    }
+
+                    @if (basedOnType === 'boolean') {
+                        <!-- No extra settings for boolean yet -->
+                        <div class="setting-item">
+                           <!-- Boolean settings -->
+                        </div>
+                    }
+                  </div>
+              </div>
+            }
+
+            @if (basedOnType === 'number') {
+                 <!-- Additional Number settings if needed -->
+                 <div class="config-section">
+                    <div class="setting-item">
+                        <label>Allow Scientific:</label>
+                        <input type="checkbox" [(ngModel)]="newType.allowScientific">
+                    </div>
+                </div>
+            }
+
+            @if (basedOnType === 'list-base' || basedOnType === 'dict') {
+              <div class="config-section">
+                  <div class="type-config-header sys-h4">
+                      {{ basedOnType === 'list-base' ? 'List' : 'Dict' }} Configuration
+                  </div>
+                  
+                  <div class="form-row">
+                      <label class="sys-h4">
+                          {{ basedOnType === 'list-base' ? 'List Of' : 'Dict Item Type' }}:
+                          <select [(ngModel)]="newType.subtypeId">
+                              @for (type of fieldBaseTypes; track type.id) {
+                                  <option [value]="type.id">{{ type.name }}</option>
+                              }
+                              <option value="new-anonymous">Of New Anonymous Type...</option>
+                          </select>
+                      </label>
+                      @if (newType.subtypeId === 'new-anonymous') {
+                         <button class="small-btn" (click)="openAnonBuilder()">Define Anonymous Type</button>
+                      }
+                  </div>
+                  
+                  @if (basedOnType === 'list-base') {
+                      <div class="setting-item">
+                          <label>Ordered List (Drag & Drop):</label>
+                          <input type="checkbox" [(ngModel)]="newType.ordered">
+                      </div>
+                  }
+              </div>
+            }
+            
+            @if (basedOnType === 'struct-base') {
+               <div class="config-section struct-config">
+        <!-- Left Column: Field List -->
+        <div class="field-settings-column">
+            
+            <div class="flex-row" style="justify-content: space-between; margin-bottom: 5px;">
+                <div class="sys-h4">Fields</div>
+                <button class="add-btn small" (click)="addField()">+ Add Field</button>
+            </div>
+            
+            <!-- Column Headers -->
+            <div class="field-list-header" style="display: flex; gap: 8px; padding: 0 8px; margin-bottom: 5px; font-size: 11px; font-weight: 600; color: #666;">
+                <div style="flex: 0 0 20px;"></div> <!-- Radio -->
+                <div style="flex: 0.5;">Name</div>
+                <div style="flex: 0 0 90px;" *ngIf="fieldGroups.length > 0">Group</div>
+                <div style="flex: 1;">Type</div>
+                <div style="flex: 0 0 30px; text-align: center; overflow: visible;">Required</div>
+                <div style="flex: 0 0 30px;"></div> <!-- Delete -->
+            </div>
+
+            <div class="fields-list">
+                        @for (field of newType.fields || []; track $index) {
+                            <div class="field-item" [class.selected]="selectedField === field" (click)="selectField(field)">
+                                <div class="field-main">
+                              <input type="radio" name="selectedField" 
+                                  [checked]="selectedField === field"
+                                  (click)="selectField(field); $event.stopPropagation()">
+                              
+                              <input type="text" [(ngModel)]="field.name" placeholder="Field Name"
+                                  (focus)="selectField(field)" style="flex: 0.5;">
+                              
+                              <!-- Group Selector (Small) -->
+                              @if (fieldGroups.length > 0) {
+                                  <select [ngModel]="getFieldGroup(field)?.id" (ngModelChange)="updateFieldGroup(field, $event)" 
+                                      style="flex: 0 0 90px;" (focus)="selectField(field)" title="Field Group">
+                                      <option [value]="null">-</option>
+                                      @for (group of fieldGroups; track group.id) {
+                                          <option [value]="group.id">{{ group.text }}</option>
+                                      }
+                                  </select>
+                              }
+                              
+                              <select [(ngModel)]="field.typeId" (change)="onFieldTypeChange(field)"
+                                  (focus)="selectField(field)" style="flex: 1;">
+                                  <optgroup label="Core Types">
+                                      @for (type of bbTypeService.types$ | async; track type.id) {
+                                          @if (!type.userDefined) {
+                                              <option [value]="type.id">{{ type.name }}</option>
+                                          }
+                                      }
+                                  </optgroup>
+                                  <optgroup label="Custom Types">
+                                      @for (type of bbTypeService.types$ | async; track type.id) {
+                                          @if (type.userDefined) {
+                                              <option [value]="type.id">{{ type.name }}</option>
+                                          }
+                                      }
+                                  </optgroup>
+                                  <option value="new-anonymous">+ New Type...</option>
+                              </select>
+                              
+                              <div style="flex: 0 0 30px; display: flex; justify-content: center;">
+                                  <input type="checkbox" style="margin: 0; height: 14px; width: 14px;"
+                                      [ngModel]="field.settings?.['required']" 
+                                      (ngModelChange)="updateFieldSetting(field, 'required', $event); selectField(field)"
+                                      (click)="$event.stopPropagation()"
+                                      title="Required">
+                              </div>
+
+                              <button class="icon-btn delete" (click)="removeField($index); $event.stopPropagation()" style="color: red; font-size: 10px; height: 20px; width: 16px; padding: 0; display: flex; align-items: center; justify-content: center; line-height: 1;">
+                                  ✕
+                              </button>
+                                </div>
+                            </div>
+                        }
+                        @if ((newType.fields || []).length === 0) {
+                            <div class="empty-selection">No fields added.</div>
+                        }
+            </div>
+
+            <!-- Field Groups Section (Moved After Fields) -->
+            <div class="field-groups-section" style="margin-top: 20px; border-top: 1px solid #eee; padding-top: 15px;">
+                <div class="flex-row" style="justify-content: space-between; margin-bottom: 5px;">
+                    <label class="sys-h4" style="font-size: 12px; text-transform: uppercase;">Field Groups</label>
+                    <button class="add-btn small" (click)="addFieldGroup()" style="padding: 2px 8px; font-size: 11px;">+ Group</button>
+                </div>
+                @for (group of fieldGroups; track $index) {
+                  <div class="flex-row" style="gap: 5px; margin-bottom: 5px;">
+                        <input type="text" [(ngModel)]="group.text" placeholder="Group Name" style="flex: 1; height: 26px;">
+                        <button class="icon-btn delete" (click)="removeFieldGroup($index)" style="height: 20px; width: 16px; display: flex; align-items: center; justify-content: center; color: red; font-size: 10px; padding: 0; line-height: 1;">
+                             ✕
+                        </button>
+                    </div>
+                }
+                @if (fieldGroups.length === 0) {
+                    <div class="help-text" style="font-size: 11px;">No groups defined.</div>
+                }
+            </div>        
+         </div>
+         
+         <!-- Right Column: Settings for Selected Field -->
+         <div class="editor-settings-column">
+                      @if (selectedField) {
+                          <div class="sub-tabs">
+                              <button [class.active]="activeFieldSettingsTab === 'type'" (click)="activeFieldSettingsTab = 'type'">{{ getSystemTypeName(selectedField!.typeId) }} Type Settings</button>
+                              <button [class.active]="activeFieldSettingsTab === 'global'" (click)="activeFieldSettingsTab = 'global'">Global Editor Settings</button>
+                              <button [class.active]="activeFieldSettingsTab === 'editor'" (click)="activeFieldSettingsTab = 'editor'">Editor Settings</button>
+                          </div>
+
+                          <div class="sub-tab-content">
+                              <!-- Type Settings (Overrides) -->
+                              @if (activeFieldSettingsTab === 'type') {
+                                  <div class="settings-list">
+                                      @for (def of getTypeSpecificFieldSettings(selectedField!); track def.id) {
+                                         <div class="field-setting-row">
+                                             <label>{{ def.name }}:</label>
+                                             <app-dynamic-field 
+                                                 [typeId]="def.typeId" 
+                                                 [subtypeId]="def.subtypeId"
+                                                 [value]="getFieldSetting(selectedField!, def.id)" 
+                                                 (valueChange)="updateFieldSetting(selectedField!, def.id, $event)">
+                                             </app-dynamic-field>
+                                         </div>
+                                      }
+                                      @if (getTypeSpecificFieldSettings(selectedField!).length === 0) {
+                                          <div class="info-box">No specific settings available for {{ getSystemTypeName(selectedField!.typeId) }}.</div>
+                                      }
+                                  </div>
+                              }
+                              
+                              <!-- Global Settings -->
+                              @if (activeFieldSettingsTab === 'global') {
+                                   <div class="settings-list">
+                                       @for (def of getGlobalEditorSettings(selectedField!); track def.id) {
+                                           <div class="field-setting-row">
+                                               <label>{{ def.name }}:</label>
+                                               <app-dynamic-field 
+                                                   [typeId]="def.typeId" 
+                                                   [subtypeId]="def.subtypeId"
+                                                   [ngModel]="getFieldSetting(selectedField!, def.id)" 
+                                                   (ngModelChange)="updateFieldSetting(selectedField!, def.id, $event)">
+                                               </app-dynamic-field>
+                                           </div>
+                                       }
+                                   </div>
+                              }
+
+                              <!-- Editor Settings -->
+                              @if (activeFieldSettingsTab === 'editor') {
+                                   <div class="settings-list">
+                                       
+                                       <!-- 1. Editor to use Selection -->
+                                       <div class="field-setting-row">
+                                           <label>Editor to use:</label>
+                                           <div class="radio-group">
+                                               <label>
+                                                   <input type="radio" name="editor_mode"
+                                                       [checked]="!isUsingCustomEditor(selectedField!)" 
+                                                       (click)="setUseCustomEditor(selectedField!, false)"> 
+                                                   Default ({{ getDefaultEditorName(selectedField!.typeId) }})
+                                               </label>
+                                               <label>
+                                                   <input type="radio" name="editor_mode"
+                                                       [checked]="isUsingCustomEditor(selectedField!)" 
+                                                       (click)="setUseCustomEditor(selectedField!, true)"> 
+                                                   Custom
+                                               </label>
+                                           </div>
+                                       </div>
+
+                                       <!-- 2. Custom Editor Dropdown -->
+                                       <div class="field-setting-row" [class.disabled]="!isUsingCustomEditor(selectedField!)">
+                                            <label>Custom Editor:</label>
+                                            <select 
+                                                [disabled]="!isUsingCustomEditor(selectedField!)"
+                                                [ngModel]="getFieldEditorId(selectedField!)" 
+                                                (ngModelChange)="setFieldEditorId(selectedField!, $event)">
+                                                @for (editor of getCompatibleEditors(selectedField!.typeId); track editor.id) {
+                                                    <option [value]="editor.id">{{ editor.name }}</option>
+                                                }
+                                            </select>
+                                       </div>
+
+                                       <hr style="border: 0; border-top: 1px dashed #ddd; margin: 15px 0;">
+
+                                       <!-- 3. View Settings For Dropdown -->
+                                       <div class="field-setting-row">
+                                            <label>View Settings for:</label>
+                                            <select [(ngModel)]="viewSettingsEditorId">
+                                                <option value="default">Default ({{ getDefaultEditorName(selectedField!.typeId) }})</option>
+                                                @for (editor of getCompatibleEditors(selectedField!.typeId); track editor.id) {
+                                                    @if (editor.id !== 'default') {
+                                                        <option [value]="editor.id">{{ editor.name }}</option>
+                                                    }
+                                                }
+                                            </select>
+                                       </div>
+
+                                       <h5 style="margin: 15px 0 10px 0; color: #666; font-size: 12px; border-bottom: 1px solid #eee; padding-bottom: 5px; display: none;"> <!-- Hidden header -->
+                                           Configuration for {{ getEditorName(selectedField!.typeId, viewSettingsEditorId) }}
+                                       </h5>
+                                       
+                                       <!-- 4. Specific Settings for viewed editor -->
+                                       @for (def of getSettingsForEditor(selectedField!, viewSettingsEditorId); track def.id) {
+                                           <div class="field-setting-row">
+                                               <label>{{ def.name }}:</label>
+                                               <app-dynamic-field 
+                                                   [typeId]="def.typeId" 
+                                                   [subtypeId]="def.subtypeId"
+                                                   [ngModel]="getFieldSetting(selectedField!, def.id)" 
+                                                   (ngModelChange)="updateFieldSetting(selectedField!, def.id, $event)">
+                                               </app-dynamic-field>
+                                           </div>
+                                       }
+                                       @if (getSettingsForEditor(selectedField!, viewSettingsEditorId).length === 0) {
+                                           <div class="info-box">No configuration options for this editor.</div>
+                                       }
+                                   </div>
+                              }
+                          </div>
+
+                      } @else {
+                          <div class="empty-selection">
+                              Select a field to configure its properties.
+                          </div>
+                      }
+                  </div>
+               </div>
+            }
+
+          </div>
+        }
+        
+        @if (activeTab === 'publishedSettings') {
+            <app-published-settings-tab 
+                [newType]="newType" 
+                [selectableTypes]="selectableTypes">
+            </app-published-settings-tab>
+        }
+
+        @if (activeTab === 'overrides') {
+            <app-type-overrides-tab
+                [newType]="newType"
+                [allTypes]="allTypes">
+            </app-type-overrides-tab>
+        }
+
+        @if (activeTab === 'editors') {
+            <app-type-editors-tab
+                [newType]="newType"
+                (save)="save()">
+            </app-type-editors-tab>
+        }
+      </div>
+
+      <!-- Nested Anonymous Builder Modal -->
+      @if (showAnonBuilder) {
+        <div class="modal-overlay">
+          <div class="modal-content">
+             <app-bb-type-builder 
+                [isAnonymousMode]="true"
+                [appConfig]="appConfig"
+                (cancel)="showAnonBuilder = false" 
+                (create)="onAnonTypeCreated($event)">
+             </app-bb-type-builder>
+          </div>
+        </div>
+      }
+
+    <div class="actions footer" style="padding-right: 20px; gap: 15px; padding-bottom: 10px;">
+        <button class="cancel-btn" (click)="cancel.emit()">Cancel</button>
+        <button class="save-btn" (click)="save()">{{ editingType ? 'Update Type' : 'Create Type' }}</button>
+      </div>
+    </div>
+  `,
+  styles: [`
+    :host { display: block; height: 100%; overflow: hidden; }
+    /* Radio Button Scaling */
+    input[type="radio"] { transform: scale(0.9); margin: 0; }
+    .builder-container {
+      padding: 0;
+      background: white;
+      border-radius: 8px;
+      display: flex;
+      flex-direction: column;
+      height: 100%;
+      box-sizing: border-box;
+      overflow: hidden; /* Ensure only content scrolls */
+    }
+    .close-btn { background: none; border: none; font-size: 20px; cursor: pointer; color: #999; }
+    .builder-tabs { display: flex; border-bottom: 2px solid #eee; margin-bottom: 0px; box-shadow: 0 2px 5px rgba(0,0,0,0.03); z-index: 10; background: white; flex-shrink: 0; }
+    .builder-tabs button {
+      padding: 6px 15px; background: none; border: none; cursor: pointer;
+      font-weight: 600; color: #666; position: relative; font-size: 13px;
+    }
+    .builder-tabs button.active { color: #2196F3; }
+    .builder-tabs button.active::after {
+      content: ''; position: absolute; bottom: -2px; left: 0; right: 0;
+      height: 2px; background: #2196F3;
+    }
+
+    .tab-content { flex: 1; overflow-y: auto; overflow-x: hidden; padding: 10px; }
+
+    .config-section { margin-top: 20px; padding: 15px; background: #f9f9f9; border-radius: 6px; }
+    .type-config-header { margin-top: 0; border-bottom: 1px solid #ddd; padding-bottom: 5px; }
+
+    .flex-row { display: flex; gap: 10px; margin-bottom: 5px; align-items: center; }
+    .form-row {
+      display: flex; gap: 20px; margin-bottom: 10px; flex-wrap: wrap;
+    }
+    
+    /* Global Compact Input Style (26px) */
+    input[type="text"], select, .setting-item input, .setting-item select {
+      height: 26px;
+      padding: 0 6px;
+      font-size: 12px;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+      box-sizing: border-box;
+    }
+    
+    .values-list input {
+      height: 26px;
+      padding: 0 6px;
+      font-size: 13px;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+      box-sizing: border-box;
+    }
+    .anon-type-container {
+      display: flex; align-items: center; gap: 5px; background: #e3f2fd;
+      padding: 4px 8px; border-radius: 4px; border: 1px solid #bbdefb;
+    }
+    .anon-type-badge { font-family: monospace; font-size: 12px; color: #1976d2; font-weight: bold; }
+    .reset-icon-btn { background: none; border: none; cursor: pointer; padding: 0; font-size: 14px; }
+
+    .footer {
+      display: flex; justify-content: flex-end; gap: 20px;
+      margin-top: 10px; padding-top: 10px; border-top: 1px solid #eee;
+      align-items: center;
+    }
+    button { padding: 3px 11px; border-radius: 4px; cursor: pointer; border: none; font-weight: 500; }
+    .save-btn { background: #2196F3; color: white; }
+    .cancel-btn { background: #eee; }
+    .add-btn { background: #4CAF50; color: white; margin-top: 10px; }
+    .add-btn.small {
+      margin-bottom: 20px;
+      padding: 4px 12px;
+      font-size: 13px;
+    }
+    .icon-btn { background: #f5f5f5; border: 1px solid #ddd; padding: 4px 8px; font-size: 14px; }
+    .icon-btn.delete { color: #d32f2f; }
+
+    /* Struct Config */
+    .struct-config {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 20px;
+        align-items: start;
+        border: none;
+        padding: 0;
+        background: transparent;
+    }
+    .field-settings-column, .editor-settings-column {
+      background: #f9f9f9;
+      border: 1px solid #eee;
+      border-radius: 4px;
+      padding: 8px;
+      min-height: 300px;
+      min-width: 0; /* Allow shrinking in grid */
+    }
+    .field-item {
+      padding: 4px 8px; /* Compact padding */
+      border-bottom: 1px solid #eee;
+      background: white;
+      margin-bottom: 2px;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+    .field-item.selected { background: #e3f2fd; border-color: #2196F3; }
+    .field-main {
+      display: flex; gap: 8px; margin-bottom: 0; align-items: center; width: 100%;
+    }
+    .field-main input[type="radio"] { flex: 0 0 20px; cursor: pointer; height: 16px; margin: 0; }
+    .field-main input[type="text"] { flex: 2; min-width: 0; }
+    .field-main select { flex: 1; min-width: 80px; }
+    .field-main .delete { flex: 0 0 30px; }
+    
+    .field-details {
+      display: flex; justify-content: space-between; align-items: center; font-size: 12px; color: #666;
+      padding-left: 5px;
+    }
+    .field-editor-selector {
+        display: flex; align-items: center; gap: 5px;
+    }
+    .field-editor-selector select {
+        height: 24px; padding: 0 5px; border: 1px solid #ddd; border-radius: 4px; font-size: 12px;
+    }
+    .setting-btn {
+        background: none; border: none; cursor: pointer; opacity: 0.5;
+    }
+    .setting-btn.active { opacity: 1; color: #2196F3; }
+    
+    .empty-selection, .info-box {
+        padding: 20px; text-align: center; color: #999; font-style: italic; font-size: 13px;
+    }
+    .settings-header {
+        border-bottom: 1px solid #ddd; padding-bottom: 10px; margin-bottom: 15px;
+    }
+    .settings-header h4 { margin: 0; color: #333; }
+    .help-text { font-size: 12px; color: #777; margin: 5px 0 0 0; }
+    
+    .field-setting-row {
+        display: grid;
+        grid-template-columns: 100px 1fr;
+        gap: 10px;
+        align-items: center;
+        margin-bottom: 3px;
+    }
+    .field-setting-row label {
+        font-size: 12px; font-weight: 500; color: #555; text-align: right; margin-right: 5px;
+        white-space: nowrap;
+    }
+    .field-setting-row app-dynamic-field {
+        width: 100%;
+    }
+    .field-setting-row.disabled { opacity: 0.5; pointer-events: none; }
+    
+    .radio-group { display: flex; flex-direction: column; gap: 5px; }
+    .radio-group label { text-align: left; font-weight: normal; font-size: 13px; display: flex; gap: 5px; align-items: center; }
+    .radio-group input[type="radio"] { height: 16px; width: 16px; margin: 0; }
+    
+    .sub-tabs { display: flex; gap: 5px; margin-bottom: 15px; border-bottom: 1px solid #eee; padding-bottom: 5px; }
+    .sub-tabs button {
+        padding: 4px 10px;
+        font-size: 12px;
+        background: #f1f1f1;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+        color: #666;
+    }
+    .sub-tabs button.active {
+        background: #2196F3;
+        color: white;
+        border-color: #1976D2;
+    }
+    .sub-tab-content { padding: 5px; }
+  `]
+})
+export class BBTypeBuilderComponent implements OnInit, OnDestroy {
+  @Input() showHeader = true;
+  // Input for editing existing types
+  @Input() editingType: BBType | null = null;
+  @Input() appConfig: AppConfig | null = null;
+  @Input() isAnonymousMode = false;
+  @Output() cancel = new EventEmitter<void>();
+  @Output() create = new EventEmitter<BBType>();
+
+  baseTypeSelection: BBTypeBase = 'Basic';
+  basedOnType: string = 'string'; // ID of the system type this is based on
+
+  // Draft type
+  newType: Partial<BBType> = {
+    name: '',
+    userDefined: true,
+    source: 'User Defined',
+    fieldBaseType: true, // Most user types can be used as fields
+    editors: []
+  };
+
+  activeTab: 'definition' | 'publishedSettings' | 'overrides' | 'editors' = 'definition';
+  activeFieldSettingsTab: 'type' | 'global' | 'editor' = 'global';
+
+  viewSettingsEditorId: string = 'default'; // Current editor selected in Struct config right panel
+
+  coreTypes: BBType[] = [];
+  allTypes: BBType[] = [];
+
+  get fieldBaseTypes() {
+    return this.allTypes.filter(t => t.fieldBaseType);
+  }
+
+  showAnonBuilder = false;
+  pendingField: BBField | null = null;
+  pendingListSubtype = false;
+
+  selectedField: BBField | null = null;
+
+  fieldGroups: { id: number | string, text: string }[] = [];
+
+  // Editor Selection Logic helpers
+  getCompatibleEditors(typeId: string): BBEditor[] {
+    const type = this.allTypes.find(t => t.id === typeId);
+    if (!type) {
+      // Fallback for core types if explicit object missing
+      if (['string', 'number', 'boolean', 'date', 'file'].includes(typeId)) {
+        // We can fetch from coreTypes, but assuming they are in allTypes
+      }
+      return [];
+    }
+
+    // 1. Direct editors
+    if (type.editors && type.editors.length > 0) return type.editors;
+
+    // 2. Base type editors (if Basic)
+    if (type.baseType === 'Basic' && type.subtypeId) {
+      return this.getCompatibleEditors(type.subtypeId);
+    }
+
+    // 3. System defaults via Service
+    // Note: service.getDefaultEditorsForBase returns a list, usually including 'default'
+    return this.bbTypeService.getDefaultEditorsForBase(type.baseType === 'Basic' ? 'Basic' : type.baseType, type.subtypeId);
+  }
+
+  getDefaultEditorName(typeId: string): string {
+    const editors = this.getCompatibleEditors(typeId);
+    const def = editors.find(e => e.id === 'default');
+    return def ? def.name : 'Default';
+  }
+
+  getFieldEditorId(field: BBField): string {
+    // Logic: Field settings > Type overrides?
+    // Check field-level setting
+    if (field.settings && field.settings['UI.Editor']) {
+      return field.settings['UI.Editor'];
+    }
+    return '';
+  }
+
+  setFieldEditorId(field: BBField, editorId: string) {
+    if (!field.settings) field.settings = {};
+    // Just set the value. Existence of key implies Custom Mode.
+    field.settings['UI.Editor'] = editorId;
+  }
+
+  isUsingCustomEditor(field: BBField): boolean {
+    // Return true if the 'UI.Editor' key exists in settings (even if empty)
+    if (!field.settings) return false;
+    return Object.prototype.hasOwnProperty.call(field.settings, 'UI.Editor');
+  }
+
+  setUseCustomEditor(field: BBField, use: boolean) {
+    if (!field.settings) field.settings = {};
+
+    if (use) {
+      // Enable Custom Mode: Ensure key exists. Preserve value if present, else default to empty or smart default.
+      if (!Object.prototype.hasOwnProperty.call(field.settings, 'UI.Editor')) {
+        field.settings['UI.Editor'] = '';
+
+        // Optional: Auto-select first available custom editor
+        const editors = this.getCompatibleEditors(field.typeId);
+        field.settings['UI.Editor'] = editors.length > 0 ? editors[0].id : '';
+      }
+    } else {
+      // Disable Custom Mode: Remove key.
+      delete field.settings['UI.Editor'];
+    }
+  }
+
+
+
+  // Field Settings Logic
+  getTypeSpecificFieldSettings(field: BBField): BBSettingDefinition[] {
+    if (!field || !field.typeId) return [];
+    const type = this.allTypes.find(t => t.id === field.typeId);
+    if (!type) return [];
+
+    // Everything that is NOT UI.* or Editor.*
+    const allSettings = this.bbTypeService.getAvailableSettings(type) || [];
+    return allSettings.filter(s => !s.id.startsWith('UI.') && !s.id.startsWith('Editor.') && s.id !== 'Editor' && s.id !== 'editor' && s.name !== 'Editor');
+  }
+
+  getGlobalEditorSettings(field: BBField): BBSettingDefinition[] {
+    // Return predefined global settings like font, readonly, etc.
+    // These should ideally come from a System/Global type or be hardcoded defs if not available
+    return [
+      { id: 'UI.ReadOnly', name: 'Read Only', typeId: 'boolean' },
+      { id: 'UI.Local', name: 'Local', typeId: 'boolean' },
+      { id: 'Editor.StdFont', name: 'Standard Font', typeId: 'font' },
+      { id: 'Editor.StdFontSize', name: 'Std Font Size', typeId: 'number' }
+    ] as BBSettingDefinition[];
+  }
+
+  getEditorName(typeId: string, editorId: string): string {
+    const editor = this.getCompatibleEditors(typeId).find(e => e.id === editorId);
+    return editor ? editor.name : editorId;
+  }
+
+  getSettingsForEditor(field: BBField, editorId: string): BBSettingDefinition[] {
+    const editor = this.getCompatibleEditors(field.typeId).find(e => e.id === editorId);
+    return editor && editor.settingDefinitions ? editor.settingDefinitions : [];
+  }
+
+  getFieldSetting(field: BBField, settingId: string): any {
+    // Check overrides
+    // Actually, for a FIELD, the setting value is just stored in field.settings?
+    // Or in field overrides?
+    // The current model puts field configuration in field.settings
+    return field.settings ? field.settings[settingId] : undefined;
+  }
+
+  updateFieldSetting(field: BBField, settingId: string, value: any) {
+    if (!field.settings) field.settings = {};
+    field.settings[settingId] = value;
+  }
+
+  getSettingSubtypeId(field: BBField, def: BBSettingDefinition): string {
+    return def.subtypeId || 'string';
+  }
+
+  // Missing Helper Methods for RHS Tabs
+  getSystemTypeName(typeId: string): string {
+    if (!typeId) return 'Type';
+    const type = this.allTypes.find(t => t.id === typeId);
+    return type ? type.name : typeId;
+  }
+
+
+
+  // Anonymous Helpers
+  isAnonymousType(typeId: string): boolean {
+    return typeId.startsWith('anon-') || typeId === 'new-anonymous' || typeId === '__new_anon__';
+  }
+
+  getAnonymousTypeName(typeId: string): string {
+    const type = this.allTypes.find(t => t.id === typeId);
+    return type ? type.name : (typeId === 'new-anonymous' ? 'New Type' : 'Unknown');
+  }
+
+  // List Helpers
+  onListSubtypeChange(event: any) {
+    if (this.newType.subtypeId === '__new_anon__') {
+      this.openAnonBuilder();
+    }
+  }
+
+  getSubtypeSettings(): BBSettingDefinition[] {
+    if (!this.newType.subtypeId) return [];
+    const subtype = this.allTypes.find(t => t.id === this.newType.subtypeId);
+    return subtype ? this.bbTypeService.getAvailableSettings(subtype) : [];
+  }
+
+  getSubtypeSetting(settingId: string): any {
+    return this.newType.settings ? this.newType.settings[settingId] : undefined;
+  }
+
+  updateSubtypeSetting(settingId: string, value: any) {
+    if (!this.newType.settings) this.newType.settings = {};
+    this.newType.settings[settingId] = value;
+  }
+
+
+  private typesSub: any;
+
+  constructor(public bbTypeService: BBTypeService) {
+    // Initialization moved to ngOnInit for subscription
+  }
+
+  ngOnDestroy() {
+    if (this.typesSub) this.typesSub.unsubscribe();
+  }
+
+  @HostListener('document:keydown.escape')
+  onEscapeKey() {
+    if (this.showAnonBuilder) {
+      this.showAnonBuilder = false;
+    }
+  }
+
+  get selectableTypes(): BBType[] {
+    // Filter out 'Type Defined' types for custom setting type selection
+    return this.allTypes.filter(t => t.source !== 'Type Defined');
+  }
+
+  private updateAvailableTypes(types: BBType[]) {
+    const combined = this.appConfig ? [...types.filter(t => !t.userDefined), ...this.appConfig.types] : types;
+    this.allTypes = combined.filter(t => !t.isAnonymous);
+  }
+
+  ngOnInit() {
+    // Subscribe to type updates
+    this.bbTypeService.types$.subscribe(types => {
+      this.updateAvailableTypes(types);
+      this.coreTypes = types.filter(t => t.baseType === 'Core' && !t.userDefined);
+
+      // Initialize if editing
+      if (this.editingType) {
+        this.initializeEdit(this.editingType);
+      } else {
+        // Defaults
+        this.basedOnType = 'string';
+        this.newType.baseType = 'Basic';
+        this.newType.subtypeId = '';
+        this.newType.values = [];
+      }
+    });
+  }
+
+  initializeEdit(type: BBType) {
+    // Clone to avoid mutating original until save
+    this.newType = JSON.parse(JSON.stringify(type));
+
+    // Determine 'basedOnType'
+    if (type.baseType === 'Basic') {
+      // Need to infer subtypes (string, number, etc) from somewhere?
+      // For now, assuming basic types map to their subtypeId if present, or just string.
+      // Actually, Core types are: String, Number, Boolean, etc.
+      // If it's a user defined Basic type, it wraps a core type.
+      this.basedOnType = type.subtypeId || 'string';
+    } else if (type.baseType === 'List') {
+      this.basedOnType = 'list-base';
+    } else if (type.baseType === 'Struct') {
+      this.basedOnType = 'struct-base';
+    } else if (type.baseType === 'Dict') {
+      this.basedOnType = 'dict';
+    } else {
+      // Fallback for DateTime etc if they are Core?
+      if (type.id === 'date') this.basedOnType = 'date';
+      else this.basedOnType = 'string';
+    }
+  }
+
+  onBasedOnTypeChange() {
+    // Reset relevant properties when base type changes
+    this.newType.values = [];
+    this.newType.fields = [];
+    this.newType.subtypeId = '';
+
+    if (this.basedOnType === 'list-base') {
+      this.newType.baseType = 'List';
+      this.newType.subtypeId = 'string'; // Default
+    } else if (this.basedOnType === 'struct-base') {
+      this.newType.baseType = 'Struct';
+      this.newType.fields = [];
+    } else if (this.basedOnType === 'dict') {
+      this.newType.baseType = 'Dict';
+      this.newType.subtypeId = 'string';
+    } else {
+      this.newType.baseType = 'Basic';
+      this.newType.subtypeId = this.basedOnType; // e.g. 'string', 'number'
+    }
+  }
+
+
+
+  // Value Management (Enum/String)
+  addValue() {
+    if (!this.newType.values) this.newType.values = [];
+    this.newType.values.push({ id: '', text: '' });
+  }
+  removeValue(index: number) {
+    if (this.newType.values) this.newType.values.splice(index, 1);
+  }
+
+  // Field Management (Struct)
+  addField() {
+    if (!this.newType.fields) this.newType.fields = [];
+    const newField = {
+      name: '',
+      typeId: 'string', // Default
+      settings: { required: false }
+    };
+    this.newType.fields.push(newField);
+    this.selectField(newField);
+  }
+  removeField(index: number) {
+    if (this.newType.fields) this.newType.fields.splice(index, 1);
+    this.selectedField = null;
+  }
+
+  selectField(field: BBField) {
+    this.selectedField = field;
+    this.viewSettingsEditorId = this.getFieldEditorId(field) || 'default';
+  }
+
+  onFieldTypeChange(field: BBField) {
+    if (field.typeId === 'new-anonymous') {
+      // Logic to open anonymous builder
+      this.openAnonBuilderForField(field);
+    }
+  }
+
+  // Anonymous Type Logic
+  openAnonBuilder() {
+    this.pendingListSubtype = true;
+    this.showAnonBuilder = true;
+  }
+  openAnonBuilderForField(field: BBField) {
+    this.pendingField = field;
+    this.pendingListSubtype = false;
+    this.showAnonBuilder = true;
+  }
+  onAnonTypeCreated(type: BBType) {
+    // Add the anonymous type to appConfig types or global list?
+    // For now, let's assume we add it to the list of available types in memory
+    // In a real app, this would need to save the anon type to the backend/store first.
+
+    this.allTypes.push(type);
+
+    if (this.pendingListSubtype) {
+      this.newType.subtypeId = type.id;
+    } else if (this.pendingField) {
+      this.pendingField.typeId = type.id;
+    }
+    this.showAnonBuilder = false;
+    this.pendingField = null;
+    this.pendingListSubtype = false;
+  }
+
+  // Editor Selection Logic helpers
+  // Editor Selection Logic helpers
+  // (Methods implemented above)
+
+  // Settings helpers
+  getTypeSettings(type: Partial<BBType>): BBSettingDefinition[] {
+    // Return settings published by the base type
+    return [];
+  }
+
+  // Field Groups Logic
+  addFieldGroup() {
+    const maxId = this.fieldGroups.reduce((max, g) => Math.max(Number(g.id) || 0, max), 0);
+    this.fieldGroups.push({ id: maxId + 1, text: `Group${maxId + 1}` });
+  }
+
+  removeFieldGroup(index: number) {
+    this.fieldGroups.splice(index, 1);
+  }
+
+  getFieldGroup(field: BBField): any {
+    const groupId = field.settings ? field.settings['UI.FieldGroup'] : null;
+    return this.fieldGroups.find(g => g.id == groupId) || null;
+  }
+
+  updateFieldGroup(field: BBField, groupId: any) {
+    if (!field.settings) field.settings = {};
+    if (groupId) {
+      field.settings['UI.FieldGroup'] = groupId;
+    } else {
+      delete field.settings['UI.FieldGroup'];
+    }
+  }
+
+  save() {
+    // Validate
+    if (!this.newType.name) {
+      alert('Type Name is required');
+      return;
+    }
+
+    this.create.emit(this.newType as BBType);
+  }
+}

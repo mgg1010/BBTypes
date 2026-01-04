@@ -1,0 +1,1291 @@
+   1 |   0 | THIS_SHOULD_BREAK_THE_BUILD;
+   2 |   0 | 
+   3 |   0 | // Force update - resolving cache issue
+   4 |   0 | import { Component, EventEmitter, Output, Input, OnInit, ViewChild } from '@angular/core';
+   5 |   0 | import { CommonModule } from '@angular/common';
+   6 |   0 | import { FormsModule } from '@angular/forms';
+   7 |   0 | import { BBTypeService } from '../services/bb-type.service';
+   8 |   0 | import { BBType, BBField, BBSettingDefinition, BBSettingListItem } from '../models/bb-types';
+   9 |   0 | import { AppConfig } from '../models/app-models';
+  10 |   0 | import { BBTypeFieldListComponent } from './bb-type-field-list.component';
+  11 |   0 | import { AddSettingDialogComponent } from './dialogs/add-setting-dialog.component';
+  12 |   0 | import { AddEditorSettingDialogComponent } from './dialogs/add-editor-setting-dialog.component';
+  13 |   0 | import { DynamicFieldComponent } from '../shared/dynamic-field.component';
+  14 |   0 | import { PublishedSettingsTabComponent } from './tabs/published-settings-tab.component';
+  15 |   0 | import { ShowAllPropertiesDialogComponent } from './dialogs/show-all-properties-dialog.component';
+  16 |   0 | import { ElementRef } from '@angular/core';
+  17 |   0 | import { getVertEditSettings } from './bb-builder-helpers';
+  18 |   0 | import { calculateControlWidth } from './layout-helpers';
+  19 |   0 | 
+  20 |   1 | @Component({
+  21 |   1 |   selector: 'app-bb-type-builder',
+  22 |   1 |   standalone: true,
+  23 |   1 |   imports: [
+  24 |   1 |     CommonModule,
+  25 |   1 |     FormsModule,
+  26 |   1 |     BBTypeFieldListComponent,
+  27 |   1 |     AddSettingDialogComponent,
+  28 |   1 |     AddEditorSettingDialogComponent,
+  29 |   1 |     DynamicFieldComponent,
+  30 |   1 |     PublishedSettingsTabComponent,
+  31 |   1 |     ShowAllPropertiesDialogComponent
+  32 |   1 |   ],
+  33 |   1 |   template: `
+  34 |   1 |     <div class="builder-container">
+  35 |   2 |         @if (showHeader) {
+  36 |   2 |             <div class="header-row">
+  37 |   2 |                 <h3>type Builder: {{ newType.name || 'New Type' }} ({{ newType.baseType }})</h3>
+  38 |   2 |                 <button class="close-btn" (click)="cancel.emit()">✕</button>
+  39 |   2 |             </div>
+  40 |   1 |         }
+  41 |   1 | 
+  42 |   1 |         <nav class="builder-tabs">
+  43 |   1 |             <button [class.active]="activeTab === 'def'" (click)="activeTab = 'def'">Definition</button>
+  44 |   1 |             <button [class.active]="activeTab === 'typeset'" (click)="activeTab = 'typeset'">Type Settings</button>
+  45 |   1 |             
+  46 |   1 |             <!-- Dynamic Editor Tabs -->
+  47 |   1 |              <!-- Base Editor (Mock) -->
+  48 |   1 |              <button *ngIf="baseEditor" 
+  49 |   1 |                 [class.active]="activeTab === 'editor_' + baseEditor.id" 
+  50 |   1 |                 (click)="activeTab = 'editor_' + baseEditor.id">
+  51 |   1 |                 {{ baseEditor.name }}
+  52 |   1 |              </button>
+  53 |   1 |             
+  54 |   1 |              <!-- Custom Published Editors -->
+  55 |   2 |              @for (ed of newType.editors; track ed.id) {
+  56 |   3 |                  @if (!ed.isHidden) {
+  57 |   3 |                      <button [class.active]="activeTab === 'editor_' + ed.id" (click)="activeTab = 'editor_' + ed.id">{{ ed.name }}</button>
+  58 |   2 |                  }
+  59 |   1 |              }
+  60 |   1 |         </nav>
+  61 |   1 | 
+  62 |   1 |         <div class="tab-content">
+  63 |   1 |             <div [style.display]="activeTab === 'def' ? 'block' : 'none'">
+  64 |   1 |             <!-- Basic Info -->
+  65 |   1 |             <div class="form-row">
+  66 |   1 |                 <label>
+  67 |   1 |                     Name: <input [(ngModel)]="newType.name" (ngModelChange)="onNameChange()" placeholder="Type Name" [disabled]="isReadOnly">
+  68 |   1 |                 </label>
+  69 |   1 |                 <label>
+  70 |   1 |                     ID: <input #shortNameInput [(ngModel)]="newType.id" [disabled]="isReadOnly">
+  71 |   1 |                 </label>
+  72 |   1 |                 <label>
+  73 |   1 |                     Based On: 
+  74 |   1 |                     <select [(ngModel)]="basedOnType" (change)="onBasedOnChange()" [disabled]="isReadOnly">
+  75 |   1 |                         <option value="struct">Struct</option>
+  76 |   1 |                         <option value="string">String</option>
+  77 |   1 |                         <!-- Other types omitted for prototype simplicity -->
+  78 |   1 |                     </select>
+  79 |   1 |                 </label>
+  80 |   1 |             </div>
+  81 |   1 |             
+  82 |   1 |              <div class="form-row" style="margin-bottom: 10px;">
+  83 |   1 |                   <label class="sys-h4" style="width: 100%;">
+  84 |   1 |                       Description:
+  85 |   1 |                       <textarea 
+  86 |   1 |                         #descInput
+  87 |   1 |                         [(ngModel)]="newType.description" 
+  88 |   1 |                         placeholder="Short description of this type" 
+  89 |   1 |                         (input)="autoResize(descInput)"
+  90 |   1 |                         [disabled]="isReadOnly"
+  91 |   1 |                         rows="1"
+  92 |   1 |                         class="desc-textarea"></textarea>
+  93 |   1 |                   </label>
+  94 |   1 |               </div>
+  95 |   1 | 
+  96 |   1 |               <div style="margin-top: 20px;">
+  97 |   1 |                   <button class="secondary-btn" (click)="showPropertiesDialog = true">Show All Properties</button>
+  98 |   1 |               </div>
+  99 |   1 |             
+ 100 |   1 |             </div> <!-- End Def Tab -->
+ 101 |   1 | 
+ 102 |   2 |             @if (activeTab === 'typeset') {
+ 103 |   2 |             <!-- Type Settings List -->
+ 104 |   2 |             <div class="settings-list-container">
+ 105 |   2 |                 <!-- Collapsible Custom Settings Section -->
+ 106 |   2 |                 <div class="custom-settings-section" style="margin-bottom: 10px;">
+ 107 |   2 |                     <div class="scope-header" style="cursor: pointer; display: flex; justify-content: space-between; align-items: center;" (click)="isCustomSettingsOpen = !isCustomSettingsOpen">
+ 108 |   2 |                         <strong>Custom Settings</strong>
+ 109 |   2 |                         <div style="font-size: 10px;">{{ isCustomSettingsOpen ? '▼' : '▶' }}</div>
+ 110 |   2 |                     </div>
+ 111 |   3 |                     @if (isCustomSettingsOpen) {
+ 112 |   3 |                         <div style="padding-bottom: 5px;">
+ 113 |   3 |                             <app-published-settings-tab 
+ 114 |   3 |                                 [newType]="newType" 
+ 115 |   3 |                                 [isReadOnly]="isReadOnly"
+ 116 |   3 |                                 [selectableTypes]="selectableTypes"
+ 117 |   3 |                                 [appConfig]="appConfig"
+ 118 |   3 |                                 (requestShortNameFocus)="switchToDefAndFocus()">
+ 119 |   3 |                             </app-published-settings-tab>
+ 120 |   3 |                         </div>
+ 121 |   2 |                     }
+ 122 |   2 |                 </div>
+ 123 |   2 | 
+ 124 |   2 |                 <div class="settings-list">
+ 125 |   3 |                     @for (item of settingsList; track item.id; let i = $index) {
+ 126 |   3 |                         
+ 127 |   3 |                         <!-- Scope Header Row -->
+ 128 |   4 |                         @if (item.type === 'header') {
+ 129 |   4 |                             <div class="scope-header">
+ 130 |   4 |                                 <strong>{{ item.label }}</strong>
+ 131 |   4 |                             </div>
+ 132 |   3 |                         } 
+ 133 |   3 |                         
+ 134 |   3 |                         <!-- Setting Row -->
+ 135 |   4 |                         @else {
+ 136 |   4 |                             <div class="setting-row-container">
+ 137 |   4 |                                 <!-- Top Row: Label + Editor (if inline) + Tools -->
+ 138 |   4 |                                 <div class="setting-top-row">
+ 139 |   4 |                                     <div class="setting-label-area">
+ 140 |   4 |                                         <span class="setting-label">{{ item.label }}:</span>
+ 141 |   4 |                                     </div>
+ 142 |   4 | 
+ 143 |   4 |                                     <!-- Inline Editor Area (for non-complex) -->
+ 144 |   5 |                                     @if (!item.isComplex) {
+ 145 |   5 |                                          <div class="setting-editor-area">
+ 146 |   6 |                                              @if (item.id === 'Type.Editor') {
+ 147 |   6 |                                                  <select [(ngModel)]="item.value" class="std-input" (ngModelChange)="emitPreview()" [disabled]="isReadOnly">
+ 148 |   7 |                                                      @for (ed of getEditorsForItem(item); track ed.id) {
+ 149 |   7 |                                                          <option [value]="ed.id">{{ ed.name }}</option>
+ 150 |   6 |                                                      }
+ 151 |   6 |                                                  </select>
+ 152 |   6 |                                              } @else {
+ 153 |   6 |                                                 <div class="dynamic-field-wrapper">
+ 154 |   6 |                                                    <app-dynamic-field
+ 155 |   6 |                                                         [typeId]="item.settingDef?.typeId || 'String'"
+ 156 |   6 |                                                         [subtypeId]="item.settingDef?.subtypeId"
+ 157 |   6 |                                                         [appConfig]="appConfig"
+ 158 |   6 |                                                         [(value)]="item.value"
+ 159 |   6 |                                                         [mode]="'edit'"
+ 160 |   6 |                                                         [isDisabled]="isReadOnly || !!item.readOnly"
+ 161 |   6 |                                                         [size]="'small'"
+ 162 |   6 |                                                         (valueChange)="emitPreview()">
+ 163 |   6 |                                                    </app-dynamic-field>
+ 164 |   6 |                                                 </div>
+ 165 |   5 |                                              }
+ 166 |   5 |                                          </div>
+ 167 |   5 |                                     } @else {
+ 168 |   5 |                                         <!-- Spacer for complex items -->
+ 169 |   5 |                                         <div style="flex: 1;"></div>
+ 170 |   4 |                                     }
+ 171 |   4 | 
+ 172 |   4 |                                     <!-- Right Tools -->
+ 173 |   4 |                                     <div class="setting-tools" *ngIf="!isReadOnly">
+ 174 |   4 |                                         <button class="icon-btn" 
+ 175 |   4 |                                             [title]="item.hidden ? 'Hidden from parent types' : 'Published to parent types'"
+ 176 |   4 |                                             (click)="item.hidden = !item.hidden; emitPreview()">
+ 177 |   4 |                                             {{ item.hidden ? '🔒' : '🔓' }}
+ 178 |   4 |                                         </button>
+ 179 |   4 |                                         <button class="icon-btn delete" *ngIf="item.removable && !item.settingDef?.noDelete" (click)="removeSetting(i)">✕</button>
+ 180 |   4 |                                         <div style="width: 20px;" *ngIf="!item.removable || item.settingDef?.noDelete"></div>
+ 181 |   4 |                                     </div>
+ 182 |   4 |                                 </div>
+ 183 |   4 | 
+ 184 |   4 |                                 <!-- Bottom Row: Complex Editor (if complex) -->
+ 185 |   5 |                                 @if (item.isComplex) {
+ 186 |   5 |                                     <div class="setting-complex-body">
+ 187 |   6 |                                         @if (item.component === 'fields') {
+ 188 |   6 |                                             <app-bb-type-field-list 
+ 189 |   6 |                                                 [fields]="newType.fields || []"
+ 190 |   6 |                                                 [fieldGroups]="fieldGroups"
+ 191 |   6 |                                                 [showSelectionRadio]="false"
+ 192 |   6 |                                                 [showGroupDefinitions]="false"
+ 193 |   6 |                                                 [availableTypes]="availableTypes"
+ 194 |   6 |                                                 [isReadOnly]="isReadOnly"
+ 195 |   6 |                                                 (addField)="onAddField()"
+ 196 |   6 |                                                 (removeField)="onRemoveField($event)"
+ 197 |   6 |                                                 (selectField)="selectedField = $event"
+ 198 |   6 |                                                 (fieldsUpdated)="emitPreview()">
+ 199 |   6 |                                             </app-bb-type-field-list>
+ 200 |   6 |                                         } @else if (item.component === 'groups') {
+ 201 |   6 |                                             <div class="groups-editor">
+ 202 |   6 |                                                 <div class="list-header">
+ 203 |   6 |                                                     <div style="flex: 1;">Group Name</div>
+ 204 |   6 |                                                     <div style="width: 30px;"></div>
+ 205 |   6 |                                                 </div>
+ 206 |   7 |                                                 @if (fieldGroups.length === 0) {
+ 207 |   7 |                                                      <div class="empty-state-row" style="display: flex; justify-content: space-between; align-items: center; padding: 4px 10px; min-height: 28px;">
+ 208 |   7 |                                                          <div class="empty-msg" style="padding: 0;">No groups defined.</div>
+ 209 |   7 |                                                          <button class="add-btn" (click)="addFieldGroup()" *ngIf="!isReadOnly">+ Add Group</button>
+ 210 |   7 |                                                      </div>
+ 211 |   7 |                                                 } @else {
+ 212 |   8 |                                                     @for (group of fieldGroups; track group.id; let i = $index) {
+ 213 |   8 |                                                         <div class="group-row">
+ 214 |   8 |                                                             <input type="text" [(ngModel)]="group.text" placeholder="Group Name" class="std-input" (ngModelChange)="emitPreview()" style="flex: 1;" [disabled]="isReadOnly">
+ 215 |   8 |                                                             <button class="icon-btn delete" (click)="removeFieldGroup(i)" *ngIf="!isReadOnly">✕</button>
+ 216 |   8 |                                                         </div>
+ 217 |   7 |                                                     }
+ 218 |   7 |                                                     <div style="display: flex; justify-content: flex-end; margin-top: 10px; padding-right: 8px;">
+ 219 |   7 |                                                         <button class="add-btn" (click)="addFieldGroup()" *ngIf="!isReadOnly">+ Add Group</button>
+ 220 |   7 |                                                     </div>
+ 221 |   6 |                                                 }
+ 222 |   6 |                                             </div>
+ 223 |   6 |                                         } @else if (item.component === 'editors') {
+ 224 |   6 |                                              <div class="editors-table-container">
+ 225 |   6 |                                                 <table class="editors-table">
+ 226 |   6 |                                                     <thead>
+ 227 |   6 |                                                         <tr>
+ 228 |   6 |                                                             <th style="width: 25%;">Editor</th>
+ 229 |   6 |                                                             <th class="short-name-col" style="width: 15%;">ShortName</th> 
+ 230 |   6 |                                                             <th style="width: 25%;">Based On</th>
+ 231 |   6 |                                                             <th class="center" style="width: 70px;">Published</th>
+ 232 |   6 |                                                             <th class="center" style="width: 60px;">Default</th>
+ 233 |   6 |                                                             <th class="center" style="width: 50px;">Delete</th>
+ 234 |   6 |                                                         </tr>
+ 235 |   6 |                                                     </thead>
+ 236 |   6 |                                                     <tbody>
+ 237 |   6 |                                                         <!-- Base Editor (Read Only Mock) - Visuals match editable rows but disabled -->
+ 238 |   6 |                                                         <!-- Base Editor (Read Only Mock) -->
+ 239 |   6 |                                                         <tr class="readonly-row" *ngIf="baseEditor">
+ 240 |   6 |                                                             <td><input type="text" [value]="baseEditor.name" class="std-input" disabled style="width: 100%"></td>
+ 241 |   6 |                                                             <td class="short-name-col"><input type="text" [value]="baseEditor.shortName || baseEditor.id" class="std-input" disabled style="width: 100%"></td>
+ 242 |   6 |                                                             <td>
+ 243 |   6 |                                                                 <select class="std-input" disabled style="width: 100%">
+ 244 |   6 |                                                                     <option>Base Editor</option>
+ 245 |   6 |                                                                 </select>
+ 246 |   6 |                                                             </td>
+ 247 |   6 |                                                             <td class="center">
+ 248 |   6 |                                                                 <button class="icon-btn" disabled title="Base editor cannot be hidden">
+ 249 |   6 |                                                                     🔓
+ 250 |   6 |                                                                 </button>
+ 251 |   6 |                                                             </td>
+ 252 |   6 |                                                             <td class="center"><input type="radio" name="defaultEditor" [value]="baseEditor.id" [checked]="newType.settings?.['Type.Editor'] === baseEditor.id" (click)="isReadOnly ? null : setDefaultEditor(baseEditor.id)"></td>
+ 253 |   6 |                                                             <td class="center"></td>
+ 254 |   6 |                                                         </tr>
+ 255 |   6 |                                                         <!-- Custom Editors -->
+ 256 |   7 |                                                         @for (ed of newType.editors; track ed.id; let i = $index) {
+ 257 |   7 |                                                             <tr>
+ 258 |   7 |                                                                 <td><input type="text" [(ngModel)]="ed.name" class="std-input" placeholder="Name" (ngModelChange)="emitPreview()" style="width: 100%" [disabled]="isReadOnly"></td>
+ 259 |   7 |                                                                 <td class="short-name-col"><input type="text" [(ngModel)]="ed.id" class="std-input" placeholder="ID" (ngModelChange)="emitPreview()" style="width: 100%" [disabled]="isReadOnly"></td>
+ 260 |   7 |                                                                 <td>
+ 261 |   7 |                                                                     <select class="std-input" style="width: 100%" [(ngModel)]="ed.baseEditorId" [disabled]="isReadOnly">
+ 262 |   8 |                                                                         @for (base of availableEditors; track base.id) {
+ 263 |   8 |                                                                             <option [value]="base.id">{{ base.name }}</option>
+ 264 |   7 |                                                                         }
+ 265 |   7 |                                                                     </select>
+ 266 |   7 |                                                                 </td>
+ 267 |   7 |                                                                     <td class="center">
+ 268 |   7 |                                                                         <button class="icon-btn" 
+ 269 |   7 |                                                                             [title]="ed.isHidden ? 'Hidden from parent types' : 'Published to parent types'" 
+ 270 |   7 |                                                                             (click)="toggleEditorVisibility(ed)"
+ 271 |   7 |                                                                             [disabled]="isReadOnly"> 
+ 272 |   7 |                                                                             {{ ed.isHidden ? '🔒' : '🔓' }}
+ 273 |   7 |                                                                         </button>
+ 274 |   7 |                                                                     </td>
+ 275 |   7 |                                                                 <td class="center"><input type="radio" name="defaultEditor" [value]="ed.id" [checked]="newType.settings?.['Type.Editor'] === ed.id" (click)="isReadOnly ? null : setDefaultEditor(ed.id)" [disabled]="isReadOnly"></td>
+ 276 |   7 |                                                                 <td class="center"><button class="icon-btn delete" (click)="removeEditor(i)" *ngIf="!isReadOnly">✕</button></td>
+ 277 |   7 |                                                             </tr>
+ 278 |   6 |                                                         }
+ 279 |   6 |                                                     </tbody>
+ 280 |   6 |                                                 </table>
+ 281 |   6 |                                                 <div style="display: flex; justify-content: flex-end; margin-top: 10px; padding-right: 8px;">
+ 282 |   6 |                                                     <button class="add-btn" (click)="addEditor()" *ngIf="!isReadOnly">+ Add Editor</button>
+ 283 |   6 |                                                 </div>
+ 284 |   6 |                                              </div>
+ 285 |   5 |                                         }
+ 286 |   5 |                                     </div>
+ 287 |   4 |                                 }
+ 288 |   4 |                             </div>
+ 289 |   3 |                         }
+ 290 |   2 |                     }
+ 291 |   2 |                 </div> 
+ 292 |   2 | 
+ 293 |   2 |                 <button class="add-setting-btn" (click)="showAddDialog = true" *ngIf="!isReadOnly">+ Add Setting</button>
+ 294 |   2 |             </div>
+ 295 |   1 |             }
+ 296 |   1 |             
+ 297 |   1 |             <!-- Editor Tabs Content -->
+ 298 |   1 |             <div *ngIf="isEditorTab(activeTab)">
+ 299 |   1 |                 <div class="settings-list-container">
+ 300 |   1 |                     
+ 301 |   1 |                      <!-- Custom Settings for this Editor -->
+ 302 |   1 |                      <div class="custom-settings-section" style="margin-bottom: 20px;">
+ 303 |   1 |                         <div class="scope-header" style="cursor: pointer; display: flex; justify-content: space-between; align-items: center;" (click)="toggleCustomSettings(activeTab)">
+ 304 |   1 |                             <strong>Custom Settings</strong>
+ 305 |   1 |                             <div style="font-size: 10px;">{{ isCustomSettingsOpenMap.get(activeTab) ? '▼' : '▶' }}</div>
+ 306 |   1 |                         </div>
+ 307 |   2 |                         @if (isCustomSettingsOpenMap.get(activeTab)) {
+ 308 |   2 |                             <div style="padding-bottom: 5px;">
+ 309 |   2 |                                 <app-published-settings-tab 
+ 310 |   2 |                                     [newType]="newType" 
+ 311 |   2 |                                     [isReadOnly]="isReadOnly || isEditorTabReadOnly(activeTab)"
+ 312 |   2 |                                     [selectableTypes]="selectableTypes"
+ 313 |   2 |                                     [appConfig]="appConfig"
+ 314 |   2 |                                     [prefixOverride]="getEditorPrefix(activeTab)">
+ 315 |   2 |                                 </app-published-settings-tab>
+ 316 |   2 |                             </div>
+ 317 |   1 |                         }
+ 318 |   1 |                     </div>
+ 319 |   1 | 
+ 320 |   1 |                      <div class="settings-list">
+ 321 |   2 |                          @for (item of getEditorSettingsList(activeTab); track item.id; let i = $index) {
+ 322 |   3 |                              @if (item.type === 'header') {
+ 323 |   3 |                                  <div class="scope-header">
+ 324 |   3 |                                      <strong>{{ item.label }}</strong>
+ 325 |   3 |                                  </div>
+ 326 |   3 |                              } @else {
+ 327 |   3 |                                  <div class="setting-row-container">
+ 328 |   3 |                                      <div class="setting-top-row">
+ 329 |   3 |                                          <div class="setting-label-area">
+ 330 |   3 |                                              <span class="setting-label">{{ item.label }}:</span>
+ 331 |   3 |                                          </div>
+ 332 |   3 |                                          <div class="setting-editor-area">
+ 333 |   3 |                                                 <div class="dynamic-field-wrapper">
+ 334 |   3 |                                                     <app-dynamic-field
+ 335 |   3 |                                                         [typeId]="item.settingDef?.typeId || 'String'"
+ 336 |   3 |                                                         [subtypeId]="item.settingDef?.subtypeId"
+ 337 |   3 |                                                         [appConfig]="appConfig"
+ 338 |   3 |                                                         [(value)]="item.value"
+ 339 |   3 |                                                         [mode]="'edit'"
+ 340 |   3 |                                                         [isDisabled]="isEditorTabReadOnly(activeTab) || !!item.readOnly || isReadOnly"
+ 341 |   3 |                                                         [explicitValues]="item.settingDef?.values"
+ 342 |   3 |                                                         [size]="'small'"
+ 343 |   3 |                                                         (valueChange)="emitPreview()">
+ 344 |   3 |                                                     </app-dynamic-field>
+ 345 |   3 |                                                 </div>
+ 346 |   3 |                                          </div>
+ 347 |   3 |                                          <div class="setting-tools" *ngIf="!isEditorTabReadOnly(activeTab) && !isReadOnly">
+ 348 |   3 |                                               <button class="icon-btn delete" *ngIf="item.removable" (click)="removeEditorSetting(activeTab, i)">✕</button>
+ 349 |   3 |                                          </div>
+ 350 |   3 |                                      </div>
+ 351 |   3 |                                  </div>
+ 352 |   2 |                              }
+ 353 |   1 |                          }
+ 354 |   1 |                      </div>
+ 355 |   1 | 
+ 356 |   1 |                      <button class="add-setting-btn" *ngIf="!isEditorTabReadOnly(activeTab) && !isReadOnly" (click)="showAddEditorDialog = true">+ Add Setting</button>
+ 357 |   1 |                 </div>
+ 358 |   1 |             </div>
+ 359 |   1 |             
+ 360 |   1 |         </div>
+ 361 |   1 |         
+ 362 |   1 |         <div class="footer">
+ 363 |   1 |             <button class="cancel-btn" (click)="cancel.emit()">Cancel</button>
+ 364 |   1 |             <button class="save-btn" (click)="save()" *ngIf="!isReadOnly">Save</button>
+ 365 |   1 | 
+ 366 |   2 |         @if (showAddDialog) {
+ 367 |   2 |             <app-add-setting-dialog
+ 368 |   2 |                 [currentType]="newType"
+ 369 |   2 |                 [existingSettings]="existingSettingsForDialog"
+ 370 |   2 |                 [appConfig]="appConfig"
+ 371 |   2 |                 (cancel)="showAddDialog = false"
+ 372 |   2 |                 (add)="onAddSetting($event)">
+ 373 |   2 |             </app-add-setting-dialog>
+ 374 |   1 |         }
+ 375 |   1 | 
+ 376 |   2 |         @if (showAddEditorDialog) {
+ 377 |   2 |             <app-add-editor-setting-dialog
+ 378 |   2 |                 [currentType]="newType"
+ 379 |   2 |                 [currentEditor]="currentEditorForDialog"
+ 380 |   2 |                 [existingSettings]="getExistingEditorSettingsForDialog"
+ 381 |   2 |                 [appConfig]="appConfig"
+ 382 |   2 |                 (cancel)="showAddEditorDialog = false"
+ 383 |   2 |                 (add)="onAddEditorSetting($event)">
+ 384 |   2 |             </app-add-editor-setting-dialog>
+ 385 |   1 |         }
+ 386 |   1 | 
+ 387 |   2 |         @if (showPropertiesDialog) {
+ 388 |   2 |             <app-show-all-properties-dialog
+ 389 |   2 |                 [type]="newType"
+ 390 |   2 |                 [baseEditor]="baseEditor"
+ 391 |   2 |                 [appConfig]="appConfig"
+ 392 |   2 |                 (cancel)="showPropertiesDialog = false">
+ 393 |   2 |             </app-show-all-properties-dialog>
+ 394 |   1 |         }
+ 395 |   1 |     </div>
+ 396 |   1 |   `,
+ 397 |   1 |   styles: [`
+ 398 |   1 |     :host { display: block; height: 100%; overflow: hidden; }
+ 399 |   1 |     .builder-container { background: white; height: 100%; display: flex; flex-direction: column; padding: 0; box-sizing: border-box; overflow: hidden; }
+ 400 |   1 |     .header-row { padding: 15px; background: #FFF3E0; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #FFCC80; }
+ 401 |   1 |     .header-row h3 { margin: 0; color: #E65100; }
+ 402 |   1 |     
+ 403 |   1 |     .builder-tabs { display: flex; border-bottom: 2px solid #eee; background: #fafafa; }
+ 404 |   1 |     .builder-tabs button { padding: 10px 20px; border: none; background: none; cursor: pointer; border-bottom: 2px solid transparent; font-weight: 600; }
+ 405 |   1 |     .builder-tabs button.active { border-bottom-color: #2196F3; color: #2196F3; background: white; }
+ 406 |   1 |     
+ 407 |   1 |     .tab-content { flex: 1; overflow-y: auto; padding: 20px; background: #fdfdfd; min-height: 0; padding-bottom: 60px; }
+ 408 |   1 |     
+ 409 |   1 |     .settings-list { display: flex; flex-direction: column; gap: 0; margin-bottom: 20px; /* border: 1px solid #ddd; */ border-bottom: none; }
+ 410 |   1 |     
+ 411 |   1 |     .scope-header { background: #eee; padding: 4px 15px; color: #333; font-size: 13px; letter-spacing: 0.5px; font-weight: bold; margin-top: 5px; }
+ 412 |   1 |     .setting-row-container { background: white; /* border-bottom: 1px solid #ddd; */ }
+ 413 |   1 |     
+ 414 |   1 |     .setting-top-row { display: flex; align-items: center; padding: 4px 15px; height: 32px; gap: 10px; }
+ 415 |   1 |     .setting-label-area { width: 130px; display: flex; align-items: center; } /* Increased width to separate from prompts */
+ 416 |   1 |     .setting-label { font-weight: 500; font-size: 13px; color: #444; }
+ 417 |   1 |     
+ 418 |   1 |     .setting-editor-area { display: flex; align-items: center; margin-right: auto; } /* Hug content, push rest right */
+ 419 |   1 |     .setting-tools { display: flex; gap: 15px; align-items: center; margin-left: 15px; position: relative; top: -4px; right: -20px; }
+ 420 |   1 |     
+ 421 |   1 |     .setting-complex-body { padding: 0 15px 0 40px; /* Indented content */ }
+ 422 |   1 | 
+ 423 |   1 |     .icon-btn { cursor: pointer; background: none; border: none; font-size: 14px; padding: 0 4px; }
+ 424 |   1 |     .delete { color: #d32f2f; cursor: pointer; background: none; border: none; font-size: 14px; }
+ 425 |   1 |     
+ 426 |   1 |     .delete { color: #d32f2f; cursor: pointer; background: none; border: none; font-size: 14px; }
+ 427 |   1 |     
+ 428 |   1 |     .add-btn { background: #4CAF50; color: white; border: none; padding: 2px 8px; border-radius: 4px; cursor: pointer; font-weight: 600; font-size: 11px; }
+ 429 |   1 |     .add-btn:hover { background: #43A047; }
+ 430 |   1 |     
+ 431 |   1 |     .add-setting-btn { width: 100%; padding: 10px; border: 2px dashed #ccc; background: #fafafa; cursor: pointer; border-radius: 6px; color: #666; font-weight: bold; margin-top: 15px; }
+ 432 |   1 |     .add-setting-btn:hover { border-color: #bbb; background: #f0f0f0; }
+ 433 |   1 | 
+ 434 |   1 |     .footer { padding: 15px; border-top: 1px solid #eee; display: flex; justify-content: flex-end; gap: 10px; background: white; }
+ 435 |   1 |     .save-btn { background: #2196F3; color: white; padding: 8px 16px; border: none; border-radius: 4px; cursor: pointer; }
+ 436 |   1 |     .cancel-btn { background: #eee; padding: 8px 16px; border: none; border-radius: 4px; cursor: pointer; }
+ 437 |   1 |     .secondary-btn { background: #607d8b; color: white; padding: 6px 12px; border: none; border-radius: 4px; cursor: pointer; font-size: 12px; }
+ 438 |   1 |     
+ 439 |   1 |     .form-row { display: flex; gap: 20px; margin-bottom: 20px; }
+ 440 |   1 |     .form-row label { font-weight: bold; font-size: 12px; display: flex; flex-direction: column; gap: 5px; }
+ 441 |   1 |     .sys-h4 { font-weight: bold; color: #333; margin: 0; display: block; margin-bottom: 5px; }
+ 442 |   1 |     .desc-textarea { width: 100%; min-height: 30px; resize: none; overflow: hidden; padding: 6px; box-sizing: border-box; font-family: inherit; font-size: inherit; border: 1px solid #ccc; border-radius: 4px; }
+ 443 |   1 |     .form-row input, .form-row select { padding: 0 6px; border: 1px solid #ccc; border-radius: 4px; width: 200px; height: 26px; font-size: 13px; box-sizing: border-box; }
+ 444 |   1 |     
+ 445 |   2 |     .list-header { 
+ 446 |   2 |         display: flex; 
+ 447 |   2 |         background-color: #f5f5f5; 
+ 448 |   2 |         height: 20px; 
+ 449 |   2 |         line-height: 20px; 
+ 450 |   2 |         align-items: center; 
+ 451 |   2 |         padding: 0 4px; 
+ 452 |   2 |         font-size: 11px; 
+ 453 |   2 |         font-weight: 600; 
+ 454 |   2 |         color: #666;
+ 455 |   2 |         border-radius: 4px;
+ 456 |   2 |         margin-bottom: 1px;
+ 457 |   2 |         text-transform: none;
+ 458 |   1 |     }
+ 459 |   1 | 
+ 460 |   1 |     .editors-table { width: 100%; border-collapse: separate; border-spacing: 0 1px; table-layout: fixed; }
+ 461 |   2 |     .editors-table th { 
+ 462 |   2 |         background-color: #f5f5f5; 
+ 463 |   2 |         height: 20px; 
+ 464 |   2 |         padding: 0 4px; 
+ 465 |   2 |         font-size: 11px; 
+ 466 |   2 |         font-weight: 600; 
+ 467 |   2 |         color: #666; 
+ 468 |   2 |         text-align: left; 
+ 469 |   2 |         border: none;
+ 470 |   2 |         text-transform: none;
+ 471 |   1 |     }
+ 472 |   1 |     .editors-table input.std-input, .editors-table select.std-input { min-width: 0; }
+ 473 |   1 |     .editors-table th:first-child { border-top-left-radius: 4px; border-bottom-left-radius: 4px; }
+ 474 |   1 |     .editors-table th:last-child { border-top-right-radius: 4px; border-bottom-right-radius: 4px; }
+ 475 |   1 |     
+ 476 |   1 |     .editors-table td { padding: 4px 8px; vertical-align: middle; }
+ 477 |   1 |     .editors-table .center { text-align: center; }
+ 478 |   1 |     .editors-table .center input[type="radio"] { vertical-align: middle; margin: 0; position: relative; top: 1px; cursor: pointer; }
+ 479 |   1 |     
+ 480 |   1 |     .std-input { height: 26px; padding: 0 6px; border: 1px solid #ccc; border-radius: 4px; font-size: 13px; min-width: 150px; box-sizing: border-box; }
+ 481 |   1 |     
+ 482 |   1 |     .dynamic-field-wrapper { width: 300px; } 
+ 483 |   1 | 
+ 484 |   1 |     .settings-btn { font-size: 14px; cursor: pointer; border: none; background: none; }
+ 485 |   1 | 
+ 486 |   1 | 
+ 487 |   1 |     .group-row { display: flex; gap: 10px; margin-bottom: 1px; align-items: center; margin-left: 10px; }
+ 488 |   1 |     .empty-msg { padding: 10px; text-align: center; color: #999; font-style: italic; font-size: 13px; }
+ 489 |   1 | 
+ 490 |   2 |     .groups-editor, .editors-table-container {
+ 491 |   2 |         /* background: #f9f9f9; REMOVED */
+ 492 |   2 |         border-radius: 4px;
+ 493 |   2 |         padding: 0; /* Reduced from 8px */
+ 494 |   1 |     }
+ 495 |   1 | 
+ 496 |   1 |     .placeholder-editor { padding: 20px; text-align: center; color: #999; border: 1px solid #eee; border-radius: 4px; }
+ 497 |   1 |     
+ 498 |   1 |     .disabled-block { pointer-events: none; opacity: 0.7; }
+ 499 |   1 |   `]
+ 500 |   0 | })
+ 501 |   1 | export class BBTypeBuilderComponent implements OnInit {
+ 502 |   1 |   @Input() showHeader = true;
+ 503 |   1 |   @Input() isAnonymousMode = false;
+ 504 |   1 |   @Input() editingType: BBType | null = null;
+ 505 |   1 |   @Input() appConfig: AppConfig | null = null;
+ 506 |   1 | 
+ 507 |   1 |   isCustomSettingsOpen = false;
+ 508 |   1 |   isCustomSettingsOpenMap: Map<string, boolean> = new Map();
+ 509 |   1 | 
+ 510 |   1 |   @Output() cancel = new EventEmitter<void>();
+ 511 |   1 |   @Output() create = new EventEmitter<BBType>();
+ 512 |   1 |   @Output() previewUpdate = new EventEmitter<BBType>();
+ 513 |   1 | 
+ 514 |   1 |   newType: any = { name: '', baseType: 'Struct', fields: [], editors: [] };
+ 515 |   1 |   basedOnType = 'Struct';
+ 516 |   1 |   activeTab = 'def'; // 'def', 'pub', 'over', 'editor_ID'
+ 517 |   1 | 
+ 518 |   1 |   settingsList: BBSettingListItem[] = [];
+ 519 |   1 |   editorSettingsListMap: Map<string, BBSettingListItem[]> = new Map();
+ 520 |   1 |   showAddDialog = false;
+ 521 |   1 |   showAddEditorDialog = false;
+ 522 |   1 |   showPropertiesDialog = false;
+ 523 |   1 | 
+ 524 |   1 |   selectedField: BBField | null = null;
+ 525 |   1 |   fieldGroups: any[] = []; // Mock
+ 526 |   1 | 
+ 527 |   1 |   availableEditors: any[] = [];
+ 528 |   1 | 
+ 529 |   1 |   constructor(private bbTypeService: BBTypeService) { }
+ 530 |   1 | 
+ 531 |   2 |   get availableTypes(): BBType[] {
+ 532 |   2 |     return this.bbTypeService.getTypes();
+ 533 |   1 |   }
+ 534 |   1 | 
+ 535 |   2 |   get selectableTypes(): BBType[] {
+ 536 |   2 |     // Mock helper or use service
+ 537 |   2 |     return this.availableTypes.filter(t => t.source !== 'Type Defined');
+ 538 |   1 |   }
+ 539 |   1 | 
+ 540 |   2 |   get isReadOnly(): boolean {
+ 541 |   2 |     return !!this.editingType && !this.editingType.userDefined;
+ 542 |   1 |   }
+ 543 |   1 | 
+ 544 |   2 |   @ViewChild('descInput') set descInputRef(ref: ElementRef<HTMLTextAreaElement>) {
+ 545 |   3 |     if (ref) {
+ 546 |   3 |       setTimeout(() => this.autoResize(ref.nativeElement), 0);
+ 547 |   2 |     }
+ 548 |   1 |   }
+ 549 |   1 |   @ViewChild('shortNameInput') shortNameInputRef!: ElementRef;
+ 550 |   1 | 
+ 551 |   2 |   autoResize(textarea: HTMLTextAreaElement) {
+ 552 |   2 |     textarea.style.height = 'auto';
+ 553 |   2 |     textarea.style.height = textarea.scrollHeight + 'px';
+ 554 |   1 |   }
+ 555 |   1 | 
+ 556 |   2 |   switchToDefAndFocus() {
+ 557 |   2 |     this.activeTab = 'def';
+ 558 |   3 |     setTimeout(() => {
+ 559 |   4 |       if (this.shortNameInputRef) {
+ 560 |   4 |         this.shortNameInputRef.nativeElement.focus();
+ 561 |   3 |       }
+ 562 |   2 |     });
+ 563 |   1 |   }
+ 564 |   1 | 
+ 565 |   2 |   get existingSettingsForDialog() {
+ 566 |   2 |     return this.settingsList
+ 567 |   2 |       .filter(item => item.type === 'setting' && item.settingDef)
+ 568 |   3 |       .map(item => {
+ 569 |   3 |         let textScope = item.scope || 'root';
+ 570 |   3 |         let scope: { field?: string, type?: string } | undefined;
+ 571 |   3 | 
+ 572 |   4 |         if (textScope === 'root') {
+ 573 |   4 |           scope = undefined;
+ 574 |   4 |         } else if (textScope === 'fields:all') {
+ 575 |   4 |           // Map implicit 'all' to explicit wildcards to match dialog's new behavior
+ 576 |   4 |           scope = { field: '*', type: '*' };
+ 577 |   4 |         } else if (textScope.startsWith('field:')) {
+ 578 |   4 |           scope = { field: textScope.substring(6) };
+ 579 |   4 |         } else if (textScope.startsWith('type:')) {
+ 580 |   4 |           scope = { type: textScope.substring(5) };
+ 581 |   3 |         }
+ 582 |   3 | 
+ 583 |   4 |         return {
+ 584 |   4 |           settingId: item.settingDef!.id,
+ 585 |   4 |           scope
+ 586 |   3 |         };
+ 587 |   2 |       });
+ 588 |   1 |   }
+ 589 |   1 | 
+ 590 |   2 |   toggleCustomSettings(tabId: string) {
+ 591 |   2 |     this.isCustomSettingsOpenMap.set(tabId, !this.isCustomSettingsOpenMap.get(tabId));
+ 592 |   1 |   }
+ 593 |   1 | 
+ 594 |   1 |   baseEditor: any = null;
+ 595 |   1 | 
+ 596 |   2 |   ngOnInit() {
+ 597 |   2 |     // Determine Base Context
+ 598 |   2 |     // Determine Base Context
+ 599 |   2 |     let baseKind: string | null = 'Struct';
+ 600 |   2 |     let subtypeId: string | undefined;
+ 601 |   2 | 
+ 602 |   3 |     if (this.editingType) {
+ 603 |   3 |       this.newType = JSON.parse(JSON.stringify(this.editingType));
+ 604 |   3 | 
+ 605 |   4 |       if (this.newType.baseType === null) {
+ 606 |   4 |         // It's a Root Type. 
+ 607 |   4 |         baseKind = null;
+ 608 |   4 |         subtypeId = this.newType.id;
+ 609 |   4 |       } else if (this.newType.baseType === 'Struct') {
+ 610 |   4 |         baseKind = 'Struct';
+ 611 |   4 |         this.basedOnType = 'struct';
+ 612 |   4 |       } else if (this.newType.baseType === 'List') {
+ 613 |   4 |         baseKind = 'List';
+ 614 |   4 |         subtypeId = this.newType.subtypeId;
+ 615 |   4 |       } else if (this.newType.baseType === 'Basic') {
+ 616 |   4 |         baseKind = 'Basic';
+ 617 |   4 |         subtypeId = this.newType.subtypeId;
+ 618 |   4 |       } else if (this.newType.baseType === 'Core') {
+ 619 |   4 |         baseKind = 'Core';
+ 620 |   4 |       } else if (this.newType.baseType === 'Enum') {
+ 621 |   4 |         baseKind = 'Enum';
+ 622 |   3 |       }
+ 623 |   3 |     } else {
+ 624 |   3 |       // New Type Creation
+ 625 |   4 |       if (this.isAnonymousMode) {
+ 626 |   4 |         // ... handled differently or use creates? 
+ 627 |   4 |         // For now stick to existing anonymous logic or minimal object
+ 628 |   4 |         this.newType = { name: '', baseType: 'Struct', fields: [], editors: [] };
+ 629 |   4 |       } else {
+ 630 |   4 |         // Use Service to create from 'Struct' template by default
+ 631 |   4 |         // But wait, what if we want to change base type?
+ 632 |   4 |         // The builder defaults to Struct. 
+ 633 |   4 |         this.newType = this.bbTypeService.createNewType('Struct', 'New Prototype');
+ 634 |   4 |         baseKind = 'Struct';
+ 635 |   3 |       }
+ 636 |   2 |     }
+ 637 |   2 | 
+ 638 |   2 |     this.availableEditors = this.bbTypeService.getDefaultEditorsForBase(baseKind, subtypeId);
+ 639 |   2 | 
+ 640 |   2 |     // ... rest of init logic ...
+ 641 |   2 |     // Ensure default editor setting logic uses the initialized editors?
+ 642 |   2 |     // createNewType already copied editors.
+ 643 |   2 | 
+ 644 |   2 |     // Set Base Editor (The one that is inherited / default)
+ 645 |   3 |     if (this.availableEditors.length > 0) {
+ 646 |   3 |       this.baseEditor = this.availableEditors[0];
+ 647 |   3 |     } else {
+ 648 |   3 |       this.baseEditor = { id: 'default', name: 'Default Editor', shortName: 'DefEdit' };
+ 649 |   2 |     }
+ 650 |   2 | 
+ 651 |   2 |     // Filter base editor out of newType.editors to avoid duplicates in UI
+ 652 |   3 |     if (this.baseEditor && this.newType.editors) {
+ 653 |   3 |       this.newType.editors = this.newType.editors.filter((e: any) => e.id !== this.baseEditor.id);
+ 654 |   2 |     }
+ 655 |   2 | 
+ 656 |   2 |     // Ensure default editor setting is present (service might have done it via copy, but safe to check)
+ 657 |   2 |     if (!this.newType.settings) this.newType.settings = {};
+ 658 |   3 |     if (!this.newType.settings['Type.Editor']) {
+ 659 |   3 |       this.newType.settings['Type.Editor'] = this.baseEditor.id;
+ 660 |   2 |     }
+ 661 |   2 | 
+ 662 |   2 |     this.initializeSettingsList();
+ 663 |   1 |   }
+ 664 |   1 | 
+ 665 |   2 |   get getExistingEditorSettingsForDialog() {
+ 666 |   2 |     if (!this.activeTab.startsWith('editor_')) return [];
+ 667 |   2 |     const list = this.getEditorSettingsList(this.activeTab);
+ 668 |   3 |     return list.map(item => {
+ 669 |   3 |       const result: any = { settingId: item.id };
+ 670 |   3 | 
+ 671 |   3 |       // Parse scope
+ 672 |   3 |       const s = item.scope || 'root';
+ 673 |   4 |       if (s === 'root') {
+ 674 |   4 |         result.scope = undefined;
+ 675 |   4 |       } else {
+ 676 |   4 |         const parts = s.split(':');
+ 677 |   4 |         const scopeObj: any = {};
+ 678 |   5 |         for (let i = 0; i < parts.length; i += 2) {
+ 679 |   5 |           const key = parts[i];
+ 680 |   5 |           const val = parts[i + 1];
+ 681 |   5 |           if (key === 'f') scopeObj.field = (val === 'all') ? '*' : val;
+ 682 |   5 |           if (key === 't') scopeObj.type = val;
+ 683 |   5 |           if (key === 'e') scopeObj.editor = val;
+ 684 |   4 |         }
+ 685 |   4 |         result.scope = scopeObj;
+ 686 |   3 |       }
+ 687 |   3 |       return result;
+ 688 |   2 |     });
+ 689 |   1 |   }
+ 690 |   1 | 
+ 691 |   1 | 
+ 692 |   1 | 
+ 693 |   1 | 
+ 694 |   1 | 
+ 695 |   2 |   initializeSettingsList() {
+ 696 |   2 |     this.settingsList = [];
+ 697 |   2 | 
+ 698 |   2 |     // 1. Seed Root Header
+ 699 |   3 |     this.settingsList.push({
+ 700 |   3 |       id: 'root_header',
+ 701 |   3 |       label: 'Type Settings',
+ 702 |   3 |       type: 'header',
+ 703 |   3 |       scope: 'root'
+ 704 |   2 |     });
+ 705 |   2 | 
+ 706 |   2 |     // 2. Add Fields Section (if Struct)
+ 707 |   3 |     if (this.newType.baseType === 'Struct') {
+ 708 |   4 |       this.settingsList.push({
+ 709 |   4 |         id: 'fields_section',
+ 710 |   4 |         label: 'Fields',
+ 711 |   4 |         type: 'setting',
+ 712 |   4 |         component: 'fields',
+ 713 |   4 |         isComplex: true,
+ 714 |   4 |         hidden: false,
+ 715 |   4 |         removable: true,
+ 716 |   4 |         scope: 'root'
+ 717 |   3 |       });
+ 718 |   3 | 
+ 719 |   4 |       this.settingsList.push({
+ 720 |   4 |         id: 'groups_section',
+ 721 |   4 |         label: 'Field Groups',
+ 722 |   4 |         type: 'setting',
+ 723 |   4 |         component: 'groups',
+ 724 |   4 |         isComplex: true,
+ 725 |   4 |         hidden: false,
+ 726 |   4 |         removable: true,
+ 727 |   4 |         scope: 'root'
+ 728 |   3 |       });
+ 729 |   2 |     }
+ 730 |   2 | 
+ 731 |   2 |     // 2. Add Editors Section
+ 732 |   3 |     this.settingsList.push({
+ 733 |   3 |       id: 'editors_section',
+ 734 |   3 |       label: 'Editors',
+ 735 |   3 |       type: 'setting', // Renders as "Editors" label row + Complex body (Table)
+ 736 |   3 |       component: 'editors',
+ 737 |   3 |       isComplex: true,
+ 738 |   3 |       hidden: false,
+ 739 |   3 |       removable: true,
+ 740 |   3 |       settingDef: { id: 'Type.Editors', name: 'Editors', typeId: 'Custom', mustOverride: true, noDelete: true },
+ 741 |   3 |       scope: 'root'
+ 742 |   2 |     });
+ 743 |   2 | 
+ 744 |   2 |     this.initializeSettingsListContinue();
+ 745 |   1 |   }
+ 746 |   1 | 
+ 747 |   2 |   save() {
+ 748 |   2 |     // Validate Mandatory Settings
+ 749 |   2 |     const mandatorySettings = this.settingsList.filter(item => item.settingDef?.mandatory);
+ 750 |   3 |     for (const item of mandatorySettings) {
+ 751 |   4 |       if (item.settingDef?.id === 'Struct.Fields') {
+ 752 |   5 |         if (!this.newType.fields || this.newType.fields.length === 0) {
+ 753 |   5 |           alert(`The '${item.label}' setting is mandatory. Please add at least one field.`);
+ 754 |   5 |           return;
+ 755 |   5 |         } else {
+ 756 |   5 |           // Generic check (e.g. for Lists or strings)
+ 757 |   5 |           // If value is undefined, null, or empty array/string?
+ 758 |   5 |           const val = item.value;
+ 759 |   6 |           if (val === undefined || val === null || (typeof val === 'string' && val.trim() === '') || (Array.isArray(val) && val.length === 0)) {
+ 760 |   6 |             alert(`The '${item.label}' setting is mandatory.`);
+ 761 |   6 |             return;
+ 762 |   5 |           }
+ 763 |   4 |         }
+ 764 |   3 |       }
+ 765 |   3 | 
+ 766 |   3 |       this.create.emit(this.newType);
+ 767 |   2 |     }
+ 768 |   2 | 
+ 769 |   3 |     getEditorsForItem(item: BBSettingListItem): any[] {
+ 770 |   4 |       if (!item.scope || item.scope === 'root') {
+ 771 |   4 |         return this.availableEditors;
+ 772 |   3 |       }
+ 773 |   3 | 
+ 774 |   4 |       if (item.scope.startsWith('field:')) {
+ 775 |   4 |         const fieldName = item.scope.split('field:')[1];
+ 776 |   4 |         const field = this.newType.fields.find((f: any) => f.name === fieldName);
+ 777 |   5 |         if (field) {
+ 778 |   5 |           const type = this.availableTypes.find(t => t.id === field.typeId);
+ 779 |   6 |           if (type) {
+ 780 |   6 |             if (type.editors && type.editors.length > 0) return type.editors;
+ 781 |   6 |             return this.bbTypeService.getDefaultEditorsForBase(type.baseType, type.subtypeId);
+ 782 |   5 |           }
+ 783 |   4 |         }
+ 784 |   3 |       }
+ 785 |   3 |       return [];
+ 786 |   2 |     }
+ 787 |   2 | 
+ 788 |   3 |     initializeSettingsListContinue() { // Splitting init to insert method safely
+ 789 |   3 |       // 3. Add Default Type.Editor setting if not present
+ 790 |   4 |       this.settingsList.push({
+ 791 |   4 |         id: 'Type.Editor',
+ 792 |   4 |         label: 'Editor',
+ 793 |   4 |         type: 'setting',
+ 794 |   4 |         hidden: false,
+ 795 |   4 |         removable: true,
+ 796 |   4 |         settingDef: { id: 'Type.Editor', name: 'Editor', typeId: 'String' },
+ 797 |   4 |         value: this.newType.settings?.['Type.Editor'] || this.availableEditors[0]?.id || 'default',
+ 798 |   4 |         scope: 'root',
+ 799 |   4 |         isComplex: false
+ 800 |   3 |       });
+ 801 |   3 | 
+ 802 |   3 |       // 4. Add Existing Overrides / Settings from Type Definitions
+ 803 |   3 |       const allDefs = this.bbTypeService.getAvailableSettings(this.newType);
+ 804 |   3 | 
+ 805 |   3 |       // Sort logic? Usually defined by order in getAvailableSettings (which respects inheritance order)
+ 806 |   3 |       // We want to skip 'Struct.Fields', 'Type.Editors', 'Type.Editor' as they are handled above.
+ 807 |   3 | 
+ 808 |   3 |       const handledIds = ['Struct.Fields', 'Type.Editors', 'Type.Editor'];
+ 809 |   3 | 
+ 810 |   4 |       allDefs.forEach(def => {
+ 811 |   4 |         if (handledIds.includes(def.id)) return;
+ 812 |   4 | 
+ 813 |   4 |         // Determine value: 
+ 814 |   4 |         // 1. Check newType.settings (override)
+ 815 |   4 |         // 2. Check default value from def
+ 816 |   4 |         let value = this.newType.settings?.[def.id];
+ 817 |   5 |         if (value === undefined) {
+ 818 |   5 |           value = def.defaultValue;
+ 819 |   5 |           // If defaultValue is undefined, maybe use service default for type?
+ 820 |   6 |           if (value === undefined) {
+ 821 |   6 |             value = this.bbTypeService.getDefaultValue(def.typeId);
+ 822 |   5 |           }
+ 823 |   4 |         }
+ 824 |   4 | 
+ 825 |   4 |         // Add to list
+ 826 |   5 |         this.settingsList.push({
+ 827 |   5 |           id: def.id,
+ 828 |   5 |           label: def.name,
+ 829 |   5 |           type: 'setting',
+ 830 |   5 |           scope: 'root', // Assuming root for type settings
+ 831 |   5 |           hidden: false, // Default visibility? Or check if it's an override? 
+ 832 |   5 |           // If it is NOT in newType.settings, it's effectively "inherited" (but we show it here to allow override?)
+ 833 |   5 |           // Actually, builder usually shows what IS overridden or allows adding.
+ 834 |   5 |           // But user screenshot shows "System Types", "Type Defined", etc. which are base settings of BBType.
+ 835 |   5 |           // So we should show them.
+ 836 |   5 |           removable: !def.noDelete,
+ 837 |   5 |           settingDef: def,
+ 838 |   5 |           value: value,
+ 839 |   5 |           isComplex: def.typeId === 'List' || def.typeId === 'Struct' || def.typeId === 'Custom' // Basic check
+ 840 |   4 |         });
+ 841 |   3 |       });
+ 842 |   2 |     }
+ 843 |   2 | 
+ 844 |   3 |     onBasedOnChange() {
+ 845 |   4 |       if (this.basedOnType === 'struct') {
+ 846 |   4 |         this.newType.baseType = 'Struct';
+ 847 |   4 |       } else {
+ 848 |   4 |         this.newType.baseType = 'Basic';
+ 849 |   4 |         this.newType.subtypeId = 'string';
+ 850 |   3 |       }
+ 851 |   3 |       this.initializeSettingsList();
+ 852 |   3 |       this.emitPreview();
+ 853 |   2 |     }
+ 854 |   2 | 
+ 855 |   3 |     onAddSetting(event: { setting: BBSettingDefinition, scope?: { field?: string, type?: string }, defaultValue?: any }) {
+ 856 |   3 |       this.showAddDialog = false;
+ 857 |   3 | 
+ 858 |   3 |       let headerLabel = 'Type Settings';
+ 859 |   3 |       let scopeId = 'root';
+ 860 |   3 | 
+ 861 |   4 |       if (event.scope) {
+ 862 |   5 |         if (event.scope.field && event.scope.field !== '*') {
+ 863 |   5 |           headerLabel = `Field: ${event.scope.field} ${event.scope.type && event.scope.type !== '*' ? '(' + event.scope.type + ')' : ''}`;
+ 864 |   5 |           scopeId = `field:${event.scope.field}`;
+ 865 |   5 |         } else if (event.scope.type && event.scope.type !== '*') {
+ 866 |   5 |           headerLabel = `All ${event.scope.type} Fields`;
+ 867 |   5 |           scopeId = `type:${event.scope.type}`;
+ 868 |   5 |         } else {
+ 869 |   5 |           headerLabel = 'All Fields';
+ 870 |   5 |           scopeId = 'fields:all';
+ 871 |   4 |         }
+ 872 |   3 |       }
+ 873 |   3 | 
+ 874 |   3 |       // Find if header exists
+ 875 |   3 |       let headerIndex = this.settingsList.findIndex(x => x.type === 'header' && x.scope === scopeId);
+ 876 |   3 | 
+ 877 |   4 |       if (headerIndex === -1 && scopeId !== 'root') {
+ 878 |   4 |         // Append new header at end
+ 879 |   5 |         this.settingsList.push({
+ 880 |   5 |           id: 'header_' + scopeId,
+ 881 |   5 |           label: headerLabel,
+ 882 |   5 |           type: 'header',
+ 883 |   5 |           scope: scopeId
+ 884 |   4 |         });
+ 885 |   4 |         headerIndex = this.settingsList.length - 1;
+ 886 |   4 |       } else if (headerIndex === -1 && scopeId === 'root') {
+ 887 |   4 |         // Should exist from init
+ 888 |   4 |         headerIndex = 0;
+ 889 |   3 |       }
+ 890 |   3 | 
+ 891 |   3 |       // Insert new setting after header (and its existing children)
+ 892 |   3 |       // Find last child of this scope
+ 893 |   3 |       let insertIndex = headerIndex + 1;
+ 894 |   4 |       while (insertIndex < this.settingsList.length && this.settingsList[insertIndex].scope === scopeId && this.settingsList[insertIndex].type !== 'header') {
+ 895 |   4 |         insertIndex++;
+ 896 |   3 |       }
+ 897 |   3 | 
+ 898 |   3 |       const settingType = this.availableTypes.find(t => t.id === event.setting.typeId);
+ 899 |   3 |       const isComplex = settingType ? (
+ 900 |   3 |         settingType.baseType === 'List' ||
+ 901 |   3 |         settingType.baseType === 'Struct' ||
+ 902 |   3 |         settingType.baseType === 'Union' ||
+ 903 |   3 |         settingType.baseType === 'Dict'
+ 904 |   3 |       ) : false;
+ 905 |   3 | 
+ 906 |   4 |       const newItem: BBSettingListItem = {
+ 907 |   4 |         id: 'setting_' + Date.now(),
+ 908 |   4 |         label: event.setting.name,
+ 909 |   4 |         type: 'setting',
+ 910 |   4 |         scope: scopeId,
+ 911 |   4 |         hidden: false,
+ 912 |   4 |         removable: true,
+ 913 |   4 |         settingDef: event.setting,
+ 914 |   4 |         value: event.defaultValue !== undefined ? event.defaultValue : this.bbTypeService.getDefaultValue(event.setting.typeId),
+ 915 |   4 |         isComplex: isComplex
+ 916 |   3 |       };
+ 917 |   3 | 
+ 918 |   3 |       this.settingsList.splice(insertIndex, 0, newItem);
+ 919 |   3 |       this.emitPreview();
+ 920 |   2 |     }
+ 921 |   2 | 
+ 922 |   3 |     removeSetting(index: number) {
+ 923 |   3 |       const item = this.settingsList[index];
+ 924 |   3 |       this.settingsList.splice(index, 1);
+ 925 |   3 | 
+ 926 |   4 |       if (item.scope && item.scope !== 'root') {
+ 927 |   4 |         const hasSettings = this.settingsList.some(
+ 928 |   4 |           x => x.scope === item.scope && x.type === 'setting'
+ 929 |   4 |         );
+ 930 |   4 | 
+ 931 |   5 |         if (!hasSettings) {
+ 932 |   5 |           const headerIndex = this.settingsList.findIndex(
+ 933 |   5 |             x => x.scope === item.scope && x.type === 'header'
+ 934 |   5 |           );
+ 935 |   6 |           if (headerIndex !== -1) {
+ 936 |   6 |             this.settingsList.splice(headerIndex, 1);
+ 937 |   5 |           }
+ 938 |   4 |         }
+ 939 |   3 |       }
+ 940 |   3 | 
+ 941 |   3 |       this.emitPreview();
+ 942 |   2 |     }
+ 943 |   2 | 
+ 944 |   2 |     // Field List Delegations
+ 945 |   3 |     onAddField() {
+ 946 |   3 |       this.newType.fields.push({ name: '', typeId: 'String' });
+ 947 |   3 |       this.emitPreview();
+ 948 |   2 |     }
+ 949 |   3 |     onRemoveField(index: number) {
+ 950 |   3 |       this.newType.fields.splice(index, 1);
+ 951 |   3 |       this.emitPreview();
+ 952 |   2 |     }
+ 953 |   2 | 
+ 954 |   3 |     addFieldGroup() {
+ 955 |   3 |       // Find max ID
+ 956 |   3 |       const maxId = this.fieldGroups.reduce((max, g) => Math.max(Number(g.id) || 0, max), 0);
+ 957 |   3 |       this.fieldGroups.push({ id: maxId + 1, text: `Group ${maxId + 1}` });
+ 958 |   3 |       this.emitPreview();
+ 959 |   2 |     }
+ 960 |   2 | 
+ 961 |   3 |     removeFieldGroup(index: number) {
+ 962 |   3 |       this.fieldGroups.splice(index, 1);
+ 963 |   3 |       this.emitPreview();
+ 964 |   2 |     }
+ 965 |   2 | 
+ 966 |   3 |     addEditor() {
+ 967 |   3 |       // Generate unique ID
+ 968 |   3 |       const baseId = 'NewEdit';
+ 969 |   3 |       let uniqueId = baseId;
+ 970 |   3 |       let counter = 1;
+ 971 |   3 | 
+ 972 |   3 |       const existingIds = this.newType.editors.map((e: any) => e.id);
+ 973 |   4 |       while (existingIds.includes(uniqueId)) {
+ 974 |   4 |         uniqueId = `${baseId}${counter}`;
+ 975 |   4 |         counter++;
+ 976 |   3 |       }
+ 977 |   3 | 
+ 978 |   4 |       this.newType.editors.push({
+ 979 |   4 |         id: uniqueId,
+ 980 |   4 |         name: 'New Editor',
+ 981 |   4 |         baseEditorId: 'VertEdit', // Default base
+ 982 |   4 |         settingDefinitions: []
+ 983 |   3 |       });
+ 984 |   3 |       this.emitPreview();
+ 985 |   2 |     }
+ 986 |   2 | 
+ 987 |   3 |     setDefaultEditor(editorId: string) {
+ 988 |   4 |       if (!this.newType.settings) {
+ 989 |   4 |         this.newType.settings = {};
+ 990 |   3 |       }
+ 991 |   3 |       this.newType.settings['Type.Editor'] = editorId;
+ 992 |   3 |       this.emitPreview();
+ 993 |   2 |     }
+ 994 |   2 | 
+ 995 |   3 |     removeEditor(index: number) {
+ 996 |   3 |       const removedEditor = this.newType.editors[index];
+ 997 |   3 |       this.newType.editors.splice(index, 1);
+ 998 |   3 | 
+ 999 |   3 |       // If the removed editor was the default, pick a new one
+1000 |   4 |       if (this.newType.settings?.['Type.Editor'] === removedEditor.id) {
+1001 |   5 |         if (this.newType.editors.length > 0) {
+1002 |   5 |           // Set to last editor
+1003 |   5 |           this.newType.settings['Type.Editor'] = this.newType.editors[this.newType.editors.length - 1].id;
+1004 |   5 |         } else {
+1005 |   5 |           // Default to base
+1006 |   5 |           this.newType.settings['Type.Editor'] = 'VertEdit';
+1007 |   4 |         }
+1008 |   3 |       }
+1009 |   3 | 
+1010 |   3 |       // If active tab was this editor, switch back to Definition
+1011 |   4 |       if (this.activeTab === 'editor_' + removedEditor.id) {
+1012 |   4 |         this.activeTab = 'def';
+1013 |   3 |       }
+1014 |   3 | 
+1015 |   3 |       this.emitPreview();
+1016 |   2 |     }
+1017 |   2 | 
+1018 |   2 | 
+1019 |   2 | 
+1020 |   3 |     emitPreview() {
+1021 |   3 |       this.updateCalculatedWidths();
+1022 |   3 |       this.previewUpdate.emit(this.newType);
+1023 |   2 |     }
+1024 |   2 | 
+1025 |   3 |     updateCalculatedWidths() {
+1026 |   3 |       // 1. Determine Context (Default Editor vs Specific Editor)
+1027 |   3 |       // For now, simpler implementation mainly targeting the Default Editor (Type Settings)
+1028 |   3 |       // or just update both contexts if possible.
+1029 |   3 | 
+1030 |   3 |       // Update Default Editor settings (Type Settings tab)
+1031 |   4 |       if (this.newType && this.newType.settings) {
+1032 |   4 |         // Gather current settings from the list to ensure we have latest inputs
+1033 |   4 |         // (Though ngModel binds directly to item.value, and init maps value to newType.settings? 
+1034 |   4 |         // Actually initializeSettingsList binds item.value to newType.settings values or copies?)
+1035 |   4 |         // In initialize: value: this.newType.settings[...] || default.
+1036 |   4 |         // And ngModel updates item.value. 
+1037 |   4 |         // We might need to sync back to settings object first or just read from newType.settings if they are bound reference?
+1038 |   4 |         // Looking at init: value: this.newType.settings[...] - primitive copy if string/bool?
+1039 |   4 |         // Ah, typically it's copy. But we need to see how save works. 
+1040 |   4 |         // Wait, 'emitPreview' is called on change.
+1041 |   4 |         // We should ensure newType.settings is updated from settingsList before calculating? 
+1042 |   4 |         // Or just read from settingsList. 
+1043 |   4 | 
+1044 |   4 |         // Let's create a proxy settings object from the current UI state
+1045 |   4 |         const currentSettings: Record<string, any> = { ...this.newType.settings };
+1046 |   5 |         this.settingsList.forEach(item => {
+1047 |   6 |           if (item.type === 'setting' && item.settingDef) {
+1048 |   6 |             currentSettings[item.settingDef.id] = item.value;
+1049 |   5 |           }
+1050 |   4 |         });
+1051 |   4 | 
+1052 |   4 |         // Identify Default Editor
+1053 |   4 |         const defaultEditorId = currentSettings['Type.Editor'] || 'default';
+1054 |   4 |         const defaultEditor = this.availableEditors.find(e => e.id === defaultEditorId) || this.newType.editors.find((e: any) => e.id === defaultEditorId);
+1055 |   4 | 
+1056 |   4 |         const result = calculateControlWidth(this.newType, defaultEditor, currentSettings, this.bbTypeService);
+1057 |   4 | 
+1058 |   4 |         // Update UI List
+1059 |   4 |         this.updateSettingListItem('Editor.ControlMinWidth', result.min);
+1060 |   4 |         this.updateSettingListItem('Editor.ControlMaxWidth', result.max);
+1061 |   4 | 
+1062 |   4 |         // Persist to type settings (as read-only value)
+1063 |   4 |         this.newType.settings['Editor.ControlMinWidth'] = result.min;
+1064 |   4 |         this.newType.settings['Editor.ControlMaxWidth'] = result.max;
+1065 |   3 |       }
+1066 |   2 |     }
+1067 |   2 | 
+1068 |   3 |     updateSettingListItem(id: string, value: any) {
+1069 |   3 |       const item = this.settingsList.find(x => x.settingDef?.id === id);
+1070 |   4 |       if (item) {
+1071 |   4 |         item.value = value;
+1072 |   4 |         item.readOnly = true; // Ensure it's read only
+1073 |   3 |       }
+1074 |   2 |     }
+1075 |   2 | 
+1076 |   3 |     toggleEditorVisibility(editor: any) {
+1077 |   3 |       editor.isHidden = !editor.isHidden;
+1078 |   4 |       if (editor.isHidden && this.activeTab === 'editor_' + editor.id) {
+1079 |   4 |         this.activeTab = 'def';
+1080 |   3 |       }
+1081 |   3 |       this.emitPreview();
+1082 |   2 |     }
+1083 |   2 | 
+1084 |   2 |   // --- Editor Settings Logic ---
+1085 |   2 | 
+1086 |   3 |   get currentEditorForDialog(): any {
+1087 |   3 |       if (!this.activeTab.startsWith('editor_')) return null;
+1088 |   3 |       const id = this.activeTab.substring(7); // remove 'editor_'
+1089 |   3 |       if (!id) return null;
+1090 |   3 |       return this.newType.editors.find((e: any) => e.id === id);
+1091 |   2 |     }
+1092 |   2 | 
+1093 |   2 | 
+1094 |   3 |     getEditorSettingsList(tabId: string): BBSettingListItem[] {
+1095 |   4 |       if (!this.editorSettingsListMap.has(tabId)) {
+1096 |   4 |         let list: BBSettingListItem[] = [];
+1097 |   4 |         const editorId = tabId.replace('editor_', '');
+1098 |   4 | 
+1099 |   4 |         // Find the editor definition
+1100 |   4 |         let editor: any = null;
+1101 |   5 |         if (this.baseEditor && this.baseEditor.id === editorId) {
+1102 |   5 |           editor = this.baseEditor;
+1103 |   5 |         } else {
+1104 |   5 |           editor = this.newType.editors.find((e: any) => e.id === editorId);
+1105 |   4 |         }
+1106 |   4 | 
+1107 |   5 |         if (editor && editor.settingDefinitions) {
+1108 |   5 |           // If it's the specific 'VertEdit', we might still use the helper if it adds special UI logic
+1109 |   5 |           // But generally we should map from definitions.
+1110 |   5 |           // The helper 'getVertEditSettings' seems to return specific UI-ready items.
+1111 |   5 |           // Let's stick to generic mapping if possible, or use helper if ID matches.
+1112 |   5 | 
+1113 |   6 |           if (editorId === 'VertEdit') {
+1114 |   6 |             list = getVertEditSettings();
+1115 |   6 |             // Bind values
+1116 |   7 |             list.forEach(item => {
+1117 |   8 |               if (item.settingDef) {
+1118 |   8 |                 item.value = this.newType.settings?.[item.settingDef.id];
+1119 |   7 |               }
+1120 |   6 |             });
+1121 |   6 |           } else {
+1122 |   6 |             // Generic mapping
+1123 |   6 | 
+1124 |   7 |             if (editor.settingDefinitions && editor.settingDefinitions.length > 0) {
+1125 |   8 |               list.push({
+1126 |   8 |                 id: 'hdr_props',
+1127 |   8 |                 label: 'Editor Properties',
+1128 |   8 |                 type: 'header',
+1129 |   8 |                 scope: 'root'
+1130 |   7 |               });
+1131 |   6 |             }
+1132 |   6 | 
+1133 |   7 |             const genericList = (editor.settingDefinitions as BBSettingDefinition[]).map(def => ({
+1134 |   7 |               id: def.id,
+1135 |   7 |               label: def.name,
+1136 |   7 |               type: 'setting' as const,
+1137 |   7 |               settingDef: def,
+1138 |   7 |               value: this.newType.settings?.[def.id] !== undefined ? this.newType.settings[def.id] : def.defaultValue,
+1139 |   7 |               isComplex: false
+1140 |   7 |               // Note: Complex handling (fields/groups) usually in Type Settings, not Editor Settings.
+1141 |   7 |               // Unless the editor *is* complex.
+1142 |   6 |             }));
+1143 |   6 |             list = list.concat(genericList);
+1144 |   5 |           }
+1145 |   4 |         }
+1146 |   4 | 
+1147 |   4 |         // Filter settings for System Core types (like Number, String) to hide standard settings
+1148 |   4 |         // User request: "it should only show custom settings which will be an empty list for number"
+1149 |   5 |         if (this.newType.baseType === 'Core' && !this.newType.userDefined) {
+1150 |   5 |           list = list.filter(item => item.settingDef?.isCustom);
+1151 |   4 |         }
+1152 |   4 | 
+1153 |   4 |         this.editorSettingsListMap.set(tabId, list);
+1154 |   3 |       }
+1155 |   3 |       return this.editorSettingsListMap.get(tabId) || [];
+1156 |   2 |     }
+1157 |   2 | 
+1158 |   3 |     isEditorTabReadOnly(tabId: string): boolean {
+1159 |   3 |       // Base editor 'VertEdit' is read only
+1160 |   3 |       return tabId === 'editor_VertEdit';
+1161 |   2 |     }
+1162 |   2 | 
+1163 |   3 |     isEditorTab(tabId: string): boolean {
+1164 |   3 |       return !!(tabId && tabId.startsWith('editor_'));
+1165 |   2 |     }
+1166 |   2 | 
+1167 |   3 |     removeEditorSetting(tabId: string, index: number) {
+1168 |   3 |       const list = this.getEditorSettingsList(tabId);
+1169 |   3 |       const item = list[index];
+1170 |   3 |       list.splice(index, 1);
+1171 |   3 | 
+1172 |   3 |       // Remove empty header if needed
+1173 |   4 |       if (item.scope && item.scope !== 'root') {
+1174 |   4 |         const hasSiblings = list.some(x => x.scope === item.scope && x.type === 'setting');
+1175 |   5 |         if (!hasSiblings) {
+1176 |   5 |           const headerIndex = list.findIndex(x => x.scope === item.scope && x.type === 'header');
+1177 |   5 |           if (headerIndex !== -1) list.splice(headerIndex, 1);
+1178 |   4 |         }
+1179 |   3 |       }
+1180 |   2 |     }
+1181 |   2 | 
+1182 |   3 |     onAddEditorSetting(event: { setting: BBSettingDefinition, scope?: { field?: string, type?: string, editor?: string }, defaultValue?: any }) {
+1183 |   3 |       this.showAddEditorDialog = false;
+1184 |   3 | 
+1185 |   3 |       const list = this.getEditorSettingsList(this.activeTab);
+1186 |   3 | 
+1187 |   3 |       // Generate Header & Scope ID
+1188 |   3 |       let headerLabel = 'Base Editor Settings';
+1189 |   3 |       let scopeId = 'root';
+1190 |   3 | 
+1191 |   4 |       if (event.scope) {
+1192 |   4 |         const f = event.scope.field;
+1193 |   4 |         const t = event.scope.type;
+1194 |   4 |         const e = event.scope.editor;
+1195 |   4 | 
+1196 |   4 |         // Logic from User Request
+1197 |   5 |         if (f && f !== '*' && e && e !== '*') {
+1198 |   5 |           // Field: Name, Editor: Spec
+1199 |   5 |           headerLabel = `Field: ${f}, Editor: ${this.getEditorName(e)}`;
+1200 |   5 |           scopeId = `f:${f}:e:${e}`;
+1201 |   5 |         } else if (f === '*' && t && t !== '*' && e && e !== '*') {
+1202 |   5 |           // All Fields, Type: Spec, Editor: Spec
+1203 |   5 |           headerLabel = `All Fields, Type: ${this.capitalize(t || '')}, Editor: ${this.getEditorName(e)}`;
+1204 |   5 |           scopeId = `f:all:t:${t}:e:${e}`;
+1205 |   5 |         } else if (f === '*' && t && t !== '*' && e === '*') {
+1206 |   5 |           // All Fields, Type: Spec, All Editors
+1207 |   5 |           headerLabel = `All Fields, Type: ${this.capitalize(t || '')}, All Editors`;
+1208 |   5 |           scopeId = `f:all:t:${t}:e:all`;
+1209 |   5 |         } else if (f === '*' && t === '*' && e === '*') {
+1210 |   5 |           // All Fields, All Types, All Editors
+1211 |   5 |           headerLabel = `All Fields, All Types, All Editors`;
+1212 |   5 |           scopeId = `global`;
+1213 |   5 |         } else if (f === '*' && e && e !== '*') {
+1214 |   5 |           // All fields, Editor: Spec (implied type irrelevant?)
+1215 |   5 |           // "All Fields, Editor: Core String Editor" (User example 2)
+1216 |   5 |           //Wait, user example 2 was "Field: All, Type: <Specific> Editor: <Specific>".
+1217 |   5 |           // What if Type is not specific? "Field: All, Editor: Spec". 
+1218 |   5 |           // If I select "All Fields", and "All Types" is selected, and "Specific Editor".
+1219 |   5 |           headerLabel = `All Fields, All Types, Editor: ${this.getEditorName(e)}`;
+1220 |   5 |           scopeId = `f:all:t:all:e:${e}`;
+1221 |   4 |         }
+1222 |   3 |       }
+1223 |   3 | 
+1224 |   3 |       // Add Header if missing
+1225 |   3 |       let headerIndex = list.findIndex(x => x.type === 'header' && x.scope === scopeId);
+1226 |   4 |       if (headerIndex === -1 && list.length === 0) {
+1227 |   4 |         // First item
+1228 |   4 |         list.push({ id: 'h_' + scopeId, label: headerLabel, type: 'header', scope: scopeId });
+1229 |   4 |         headerIndex = 0;
+1230 |   4 |       } else if (headerIndex === -1) {
+1231 |   4 |         list.push({ id: 'h_' + scopeId, label: headerLabel, type: 'header', scope: scopeId });
+1232 |   4 |         headerIndex = list.length - 1;
+1233 |   3 |       }
+1234 |   3 | 
+1235 |   3 |       // Insert Setting
+1236 |   3 |       let insertIndex = headerIndex + 1;
+1237 |   4 |       while (insertIndex < list.length && list[insertIndex].scope === scopeId && list[insertIndex].type !== 'header') {
+1238 |   4 |         insertIndex++;
+1239 |   3 |       }
+1240 |   3 | 
+1241 |   4 |       list.splice(insertIndex, 0, {
+1242 |   4 |         id: 'es_' + Date.now(),
+1243 |   4 |         label: event.setting.name,
+1244 |   4 |         type: 'setting',
+1245 |   4 |         scope: scopeId,
+1246 |   4 |         settingDef: event.setting,
+1247 |   4 |         value: event.defaultValue,
+1248 |   4 |         removable: true,
+1249 |   4 |         isComplex: false
+1250 |   3 |       });
+1251 |   2 |     }
+1252 |   2 | 
+1253 |   3 |     getEditorName(id: string): string {
+1254 |   3 |       const ed = this.availableEditors.find(e => e.id === id);
+1255 |   3 |       return ed ? ed.name : id;
+1256 |   2 |     }
+1257 |   2 | 
+1258 |   3 |   private capitalize(s: string): string {
+1259 |   3 |     if (!s) return s;
+1260 |   3 |     return s.charAt(0).toUpperCase() + s.slice(1);
+1261 |   2 |   }
+1262 |   2 | 
+1263 |   3 |   getEditorPrefix(tabId: string): string | undefined {
+1264 |   3 |     if (!tabId.startsWith('editor_')) return undefined;
+1265 |   3 |     const editorId = tabId.substring(7);
+1266 |   3 | 
+1267 |   3 |     // Check if it's the Base Editor
+1268 |   4 |     if (this.baseEditor && this.baseEditor.id === editorId) {
+1269 |   4 |       return `${this.newType.id || 'Type'}.${this.baseEditor.shortName || this.baseEditor.id}`;
+1270 |   3 |     }
+1271 |   3 | 
+1272 |   3 |     // Check custom editors
+1273 |   3 |     const editor = this.newType.editors.find((e: any) => e.id === editorId);
+1274 |   4 |     if (editor) {
+1275 |   4 |       return `${this.newType.id || 'Type'}.${editor.shortName || editor.id}`;
+1276 |   3 |     }
+1277 |   3 | 
+1278 |   3 |     return undefined;
+1279 |   2 |   }
+1280 |   2 | 
+1281 |   3 |   onNameChange() {
+1282 |   3 |     if (!this.newType.name) return;
+1283 |   3 |     // Simple auto-id: remove spaces, lowercase? User said "spaces removed", typically CamelCase or PascalCase for types.
+1284 |   3 |     // But usually IDs are somewhat technical.
+1285 |   3 |     // "Short Name ... default to Name with spaces removed"
+1286 |   3 |     // e.g. "My Type" -> "MyType"
+1287 |   4 |     if (!this.newType.id) {
+1288 |   4 |       this.newType.id = this.newType.name.replace(/\s+/g, '');
+1289 |   3 |     }
+1290 |   2 |   }
+1291 |   1 | }

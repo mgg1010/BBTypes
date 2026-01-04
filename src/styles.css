@@ -1,0 +1,205 @@
+@import 'quill/dist/quill.snow.css';
+@import url('https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap');
+
+/* ============================================
+   GLOBAL DESIGN TOKENS - FONT SYSTEM
+   ============================================ */
+
+:root {
+    /* Core Font Family */
+    --font-family-base: 'Roboto', "Helvetica Neue", sans-serif;
+    --font-family-mono: 'Courier New', Consolas, monospace;
+
+    /* Font Sizes - Semantic Naming */
+    --font-size-xs: 10px;
+    /* Tiny labels, badges */
+    --font-size-sm: 11px;
+    /* Small labels, help text */
+    --font-size-base: 13px;
+    /* DEFAULT - inputs, labels, body text */
+    --font-size-md: 14px;
+    /* Emphasized text, headings */
+
+    /* ... other vars ... */
+
+    --font-size-lg: 16px;
+    /* Large inputs, prominent labels */
+    --font-size-xl: 18px;
+    /* Section headings */
+    --font-size-xxl: 20px;
+    /* Page headings */
+
+    /* Line Heights */
+    --line-height-tight: 1.2;
+    --line-height-base: 1.5;
+    --line-height-relaxed: 1.6;
+
+    /* Font Weights */
+    --font-weight-normal: 400;
+    --font-weight-medium: 500;
+    --font-weight-semibold: 600;
+    --font-weight-bold: 700;
+}
+
+/* CENTRAL TYPOGRAPHY */
+.sys-h4 {
+    font-family: var(--font-family-base) !important;
+    font-size: var(--font-size-base) !important;
+    /* 13px */
+    font-weight: 600 !important;
+    color: #333 !important;
+    line-height: 1.5 !important;
+    letter-spacing: normal !important;
+    text-transform: none !important;
+}
+
+.sys-body-text {
+    font-family: var(--font-family-base) !important;
+    font-size: var(--font-size-base) !important;
+    /* 13px */
+    font-weight: 400 !important;
+    color: #333 !important;
+    line-height: 1.5 !important;
+}
+
+/* ============================================
+   BASE STYLES
+   ============================================ */
+
+body {
+    font-family: var(--font-family-base);
+    font-size: var(--font-size-base);
+    line-height: var(--line-height-base);
+    margin: 0;
+    padding: 20px;
+    background-color: #f9f9f9;
+}
+
+/* ============================================
+   GLOBAL TYPOGRAPHY STANDARD
+   ============================================ */
+
+/* All form elements use base font */
+input,
+select,
+textarea,
+button {
+    font-family: var(--font-family-base) !important;
+    font-size: var(--font-size-base) !important;
+}
+
+/* Labels and spans */
+label,
+span {
+    font-family: var(--font-family-base);
+    font-size: var(--font-size-base);
+}
+
+/* Form element padding */
+input,
+select,
+textarea {
+    padding: 6px 8px;
+    line-height: var(--line-height-base);
+}
+
+/* Code/monospace elements */
+code,
+pre,
+.monospace {
+    font-family: var(--font-family-mono);
+    font-size: var(--font-size-sm);
+}
+
+/* ============================================
+   UTILITY CLASSES
+   ============================================ */
+
+.text-xs {
+    font-size: var(--font-size-xs) !important;
+}
+
+.text-sm {
+    font-size: var(--font-size-sm) !important;
+}
+
+.text-base {
+    font-size: var(--font-size-base) !important;
+}
+
+.text-md {
+    font-size: var(--font-size-md) !important;
+}
+
+.text-lg {
+    font-size: var(--font-size-lg) !important;
+}
+
+.text-xl {
+    font-size: var(--font-size-xl) !important;
+}
+
+.text-xxl {
+    font-size: var(--font-size-xxl) !important;
+}
+
+.font-normal {
+    font-weight: var(--font-weight-normal) !important;
+}
+
+.font-medium {
+    font-weight: var(--font-weight-medium) !important;
+}
+
+.font-semibold {
+    font-weight: var(--font-weight-semibold) !important;
+}
+
+.font-bold {
+    font-weight: var(--font-weight-bold) !important;
+}
+
+/* ============================================
+   COMMON UI PATTERNS
+   ============================================ */
+
+/* Table headers should be consistent */
+th {
+    font-size: var(--font-size-sm);
+    font-weight: var(--font-weight-semibold);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: #888;
+}
+
+/* Help text / hints */
+.help-text,
+.hint,
+small {
+    font-size: var(--font-size-sm);
+    color: #666;
+    font-style: italic;
+}
+
+/* Prompts/labels in forms */
+.prompt,
+.field-label {
+    font-size: var(--font-size-base);
+    font-weight: var(--font-weight-medium);
+    color: #333;
+}
+
+/* Modal/dialog headings */
+.modal-header h3,
+.dialog-header h4 {
+    font-size: var(--font-size-md);
+    font-weight: var(--font-weight-semibold);
+    margin: 0;
+}
+
+/* Error messages */
+.error,
+.error-message {
+    font-size: var(--font-size-sm);
+    color: #d32f2f;
+}

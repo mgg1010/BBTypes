@@ -1,0 +1,931 @@
+import { Component, Input, Output, EventEmitter, OnInit, HostListener } from '@angular/core';
+import { CommonModule } from '@angular/common';
+import { FormsModule } from '@angular/forms';
+import { BBTypeService } from '../services/bb-type.service';
+import { BBType, BBSettingDefinition } from '../models/bb-types';
+import { BBTypeBuilderComponent } from './bb-type-builder.component';
+import { DynamicFieldComponent } from '../shared/dynamic-field.component';
+import { AppConfig } from '../models/app-models';
+import { map } from 'rxjs/operators';
+import { BehaviorSubject, Observable, of } from 'rxjs';
+import { EditorMode, EditorSize } from '../shared/editor.interface';
+
+@Component({
+  selector: 'app-bb-type-list',
+  standalone: true,
+  imports: [CommonModule, FormsModule, BBTypeBuilderComponent, DynamicFieldComponent],
+  template: `
+    <div class="type-manager">
+        <div class="toolbar">
+            <button class="primary-btn" (click)="view = 'create'">+ New Type</button>
+            <span style="margin-left: 15px; margin-right: 5px;">Show:</span>
+            <label class="filter-check">
+                <input type="checkbox" [(ngModel)]="showSystem" (ngModelChange)="onFilterChange()">
+                System Types
+            </label>
+            <label class="filter-check">
+                <input type="checkbox" [(ngModel)]="showTypeDefined" (ngModelChange)="onFilterChange()">
+                Type Defined
+            </label>
+            <label class="filter-check">
+                <input type="checkbox" [(ngModel)]="showUserDefined" (ngModelChange)="onFilterChange()">
+                User Defined
+            </label>
+            <div class="spacer"></div>
+            <button class="action-btn danger-btn" (click)="resetAll()" style="color: #d32f2f; border-color: #d32f2f;">⚠️ Reset All</button>
+            <button class="action-btn" (click)="downloadConfig()">💾 Save (Download)</button>
+            <button class="action-btn" (click)="fileInput.click()">📂 Load (Upload)</button>
+            <input #fileInput type="file" (change)="loadConfig($event)" style="display: none" accept=".json">
+        </div>
+
+        <table class="type-table">
+            <thead>
+            <tr>
+                <th>Name</th>
+                <th>Base Type</th>
+                <th>Source</th>
+                <th>Details</th>
+                <th>Actions</th>
+            </tr>
+            </thead>
+            <tbody>
+            @for (type of types$ | async; track type.id) {
+                <tr>
+                <td><strong>{{ type.name }}</strong></td>
+                <td>
+                    @if (type.source === 'User Defined') {
+                        <span class="badge {{type.baseType}}">{{ getBasedOnTypeName(type) }}</span>
+                    }
+                </td>
+                <td>
+                    @if (appConfig) {
+                        @if (type.userDefined) {
+                            <span class="tag user">App</span>
+                        } @else {
+                            <span class="tag system">System</span>
+                        }
+                    } @else {
+                        @if (type.userDefined) {
+                            <span class="tag user">User</span>
+                        } @else {
+                            <span class="tag system">System</span>
+                        }
+                    }
+                </td>
+                <td>
+                    @if (type.baseType === 'List' || type.baseType === 'Dict') {
+                        {{ type.baseType }} of {{ getTypeName(type.subtypeId) }}
+                    } @else if (type.baseType === 'Basic') {
+                         Based on {{ getTypeName(type.subtypeId) }} ({{ type.values?.length || 0 }} values)
+                    } @else if (type.fields) {
+                        {{ type.fields.length }} Fields
+                    }
+                </td>
+                <td>
+                    @if (type.userDefined) {
+                        <button class="edit-btn" (click)="editType(type)">✏️ Edit</button>
+                        <button 
+                            class="delete-btn" 
+                            [class.disabled]="isTypeRef(type.id)" 
+                            [title]="isTypeRef(type.id) ? 'Cannot delete: Type is used by ' + getRefNames(type.id) : 'Delete Type'"
+                            (click)="!isTypeRef(type.id) && deleteType(type)">
+                            🗑️
+                        </button>
+                    }
+                    @if (type.fieldBaseType) {
+                        <button class="test-btn" (click)="openTestEditor(type)">🧪 Test</button>
+                    }
+                </td>
+                </tr>
+            }
+            </tbody>
+        </table>
+      
+      @if (view === 'create') {
+          <div class="modal-overlay" >
+            <div class="modal-content type-builder-modal" 
+                 [style.transform]="'translate(' + modalTransform.x + 'px, ' + modalTransform.y + 'px)'"
+                 (click)="$event.stopPropagation()">
+                
+                <div class="modal-header draggable" (mousedown)="startDrag($event)">
+                    <h3 style="margin:0; font-size: 14px;">{{ editingType ? 'Edit Type: ' + editingType.name : 'Create New Type' }}</h3>
+                    <div class="header-actions">
+                         <button class="close-btn" (click)="cancelEdit()">✕</button>
+                    </div>
+                </div>
+
+                <app-bb-type-builder 
+                    [showHeader]="false"
+                    [editingType]="editingType"
+                    [appConfig]="appConfig"
+                    (cancel)="cancelEdit()"
+                    (create)="onTypeCreated($event)">
+                </app-bb-type-builder>
+            </div>
+          </div>
+      }
+      
+      <!-- Test Editor Modal -->
+      @if (testingType) {
+        <div class="modal-overlay" (click)="closeTestEditor()">
+          <div class="test-modal-content resizable-modal" [class.with-sidebar]="showTestSidebar" (click)="$event.stopPropagation()">
+            <div class="resize-handle"></div>
+            <button class="close-btn" (click)="closeTestEditor()">✕</button>
+            <div class="test-modal-main">
+                <div class="modal-header">
+                  <h3>Test Editor: {{ testingType.name }}</h3>
+                  <div class="header-actions">
+                  </div>
+                </div>
+                <div class="test-preview-area">
+                    <div class="test-field-container">
+                        <label class="test-label">{{ testingType.name }}:</label>
+                        <div class="test-input-wrapper">
+                            <app-dynamic-field
+                                [typeId]="testingType.id"
+                                [appConfig]="appConfig"
+                                [(value)]="testValue"
+                                [mode]="testSettings['UI.EditMode'] === 'read' ? 'read' : 'edit'"
+                                [size]="testSettings['UI.Size'] || 'medium'"
+                                [editorId]="selectedEditorId"
+                                [settings]="testSettings"
+                                [runtimeOverrides]="activeOverrides">
+                            </app-dynamic-field>
+                        </div>
+                    </div>
+                      
+                    <div class="test-output">
+                        <strong>Current Value:</strong>
+                        <pre>{{ testValue | json }}</pre>
+                    </div>
+                </div>
+            </div>
+
+            <aside class="test-sidebar">
+                <div class="sidebar-header">
+                    <h4>Settings</h4>
+                </div>
+                <div class="sidebar-body">
+                    <div class="settings-list">
+                        @for (group of groupedSettings; track group.fieldName) {
+                            <div class="field-setting-group">
+                                @if (group.fieldName !== '*') {
+                                    <div class="field-header">[{{ group.fieldName }}]</div>
+                                }
+                                @for (def of group.settings; track def.id) {
+                                    <div class="setting-item">
+                                        <label [title]="def.id">{{ def.name }}:</label>
+                                        <app-dynamic-field
+                                            [typeId]="def.typeId"
+                                            [subtypeId]="getTestSettingSubtypeId(def, group.fieldName)"
+                                            [value]="getTestOverrideValue(group.fieldName, def.id)"
+                                            (valueChange)="updateTestOverride(group.fieldName, def.id, $event)"
+                                            size="small"
+                                            mode="edit">
+                                        </app-dynamic-field>
+                                    </div>
+                                }
+                            </div>
+                        }
+                        @if (groupedSettings.length === 0) {
+                            <div class="empty-settings">No settings published by this editor or its fields.</div>
+                        }
+                    </div>
+                </div>
+            </aside>
+          </div>
+        </div>
+      }
+    </div>
+  `,
+  styles: [`
+    .type-manager {
+        background: #fff;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+        padding: 20px;
+    }
+    .toolbar {
+        display: flex;
+        gap: 10px;
+        margin-bottom: 20px;
+        align-items: center;
+    }
+    .spacer { flex-grow: 1; }
+    
+    button {
+        cursor: pointer;
+        padding: 6px 12px;
+        border-radius: 4px;
+        border: 1px solid #ccc;
+        background: #f9f9f9;
+    }
+    .primary-btn {
+        background: #2196F3;
+        color: white;
+        border: none;
+        font-weight: bold;
+    }
+    
+    .type-table {
+        width: 100%;
+        border-collapse: collapse;
+    }
+    th, td {
+        text-align: left;
+        padding: 10px;
+        border-bottom: 1px solid #eee;
+    }
+    th {
+        background: #f5f5f5;
+        font-weight: 600;
+        color: #555;
+    }
+    
+    .badge {
+        padding: 2px 6px;
+        border-radius: 10px;
+        font-size: 11px;
+    }
+    .badge.Core { background: #e3f2fd; color: #1976D2; }
+    .badge.Basic { background: #fff3e0; color: #F57C00; }
+    .badge.List { background: #e8f5e9; color: #388E3C; }
+    .badge.Struct { background: #f3e5f5; color: #7B1FA2; }
+    
+    .tag { font-size: 11px; text-transform: uppercase; font-weight: bold; color: #888; }
+    .tag.user { background: #4CAF50; color: white; }
+    .tag.system { background: #9E9E9E; color: white; }
+    
+    .test-btn {
+      background: #2196F3;
+      color: white;
+      border: none;
+      padding: 4px 12px;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 12px;
+      margin-left: 5px;
+    }
+    .test-btn:hover {
+      background: #1976D2;
+    }
+    
+    .edit-btn {
+      background: #FF9800;
+      color: white;
+      border: none;
+      padding: 4px 12px;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 12px;
+    }
+    .edit-btn:hover {
+      background: #F57C00;
+    }
+        
+    .delete-btn { background: #ffebee; color: #d32f2f; border: 1px solid #ffcdd2; margin-left: 5px; }
+    .delete-btn.disabled { opacity: 0.5; cursor: not-allowed; background: #eee; color: #999; border-color: #ddd; }
+
+    .modal-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: transparent; /* Transparent for modeless feel */
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 1000;
+      pointer-events: none; /* Allow interaction with background */
+    }
+    
+    .modal-content {
+      background: white;
+      border-radius: 8px;
+      padding: 0;
+      min-width: 500px;
+      max-width: 800px;
+      max-height: 80vh;
+      overflow: auto;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+    }
+    
+    .modal-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      height: 60px; /* Fixed height for consistency */
+      padding: 0 20px;
+      padding-right: 60px; /* Space for close button */
+      border-bottom: 1px solid #eee;
+      box-sizing: border-box;
+      position: relative;
+    }
+    
+    .modal-header h3 {
+      margin: 0;
+    }
+    
+    .close-btn {
+      background: none;
+      border: none;
+      font-size: 24px;
+      cursor: pointer;
+      color: #999;
+      position: absolute;
+      top: 0;
+      right: 0;
+      width: 60px;
+      height: 60px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .close-btn:hover {
+      color: #333;
+      background: #f5f5f5;
+    }
+    
+    .modal-body {
+      padding: 20px;
+    }
+    
+    .test-output {
+      margin-top: 20px;
+      padding: 15px;
+      background: #f5f5f5;
+      border-radius: 4px;
+      font-family: monospace;
+      font-size: 12px;
+    }
+    .test-output pre {
+      margin: 5px 0 0 0;
+      white-space: pre-wrap;
+    }
+
+    /* Enhanced Test Modal */
+    .test-modal-content {
+      background: white;
+      border-radius: 8px;
+      display: flex;
+      width: 90vw;
+      max-width: 600px;
+      height: 80vh;
+      overflow: hidden;
+      resize: both; /* Added resize capability */
+      box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+      box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+      transition: max-width 0.3s ease;
+      position: relative;
+    }
+    .test-modal-content .close-btn {
+        z-index: 10;
+        position: absolute;
+        top: 0;
+        right: 0;
+        /* Inherits size/flex from previous definition */
+    }
+    .test-modal-content.with-sidebar {
+      max-width: 1000px;
+    }
+    .test-modal-main {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+    .test-preview-area {
+      flex: 1;
+      padding: 20px;
+      overflow-y: auto;
+      background: #fdfdfd;
+    }
+    .test-field-container {
+        padding: 30px;
+        background: white;
+        border: 1px solid #eee;
+        border-radius: 8px;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.02);
+        
+        /* New Grid Layout for Standardized Alignment */
+        display: grid;
+        display: grid;
+        grid-template-columns: auto 1fr; /* Reduced from 120px to reduce indent */
+        gap: 20px;
+        align-items: flex-start;
+    }
+    .test-label {
+        font-weight: bold;
+        color: #555;
+        text-align: left; /* Moved back to left as requested */
+        margin-top: 6px; /* Align with input baseline */
+        font-size: 14px;
+    }
+    .test-input-wrapper {
+        min-width: 0; /* Prevent flex blowout */
+    }
+    .header-actions { display: flex; gap: 10px; align-items: center; }
+    .sidebar-toggle { 
+        padding: 6px 12px; font-size: 12px; border: 1px solid #2196F3; color: #2196F3;
+        background: transparent; border-radius: 4px; cursor: pointer;
+    }
+    .sidebar-toggle.active { background: #e3f2fd; }
+
+    .test-sidebar {
+        width: 450px;
+        flex-shrink: 0; /* Fix regression: prevent sidebar from shrinking */
+        border-left: 1px solid #eee;
+        background: #f9f9f9;
+        display: flex;
+        flex-direction: column;
+    }
+    .sidebar-header { 
+        height: 60px; /* Fixed height to match main header */
+        padding: 0 20px; 
+        display: flex;
+        align-items: center;
+        border-bottom: 1px solid #eee; 
+        background: #fff; 
+        box-sizing: border-box;
+    }
+    .sidebar-header h4 { margin: 0; font-size: 14px; color: #555; }
+    .sidebar-body { flex: 1; padding: 10px 30px 10px 0; overflow-y: auto; }
+    
+    .setting-group { margin-bottom: 20px; }
+    .setting-group label { display: block; font-size: 12px; font-weight: bold; color: #888; margin-bottom: 5px; text-transform: uppercase; }
+    .setting-group select { 
+        width: 100%; 
+        padding: 2px 8px 2px 6px;
+        height: 24px;
+        border: 1px solid #ddd; 
+        border-radius: 4px; 
+    }
+
+    .setting-item {
+        display: grid;
+        grid-template-columns: 110px 1fr;
+        gap: 10px;
+        align-items: flex-start;
+        margin-bottom: 8px;
+    }
+    .setting-item label { 
+        display: block; 
+        font-size: 13px; 
+        margin-top: 6px;
+        margin-bottom: 0px; 
+        color: #333; 
+        font-weight: normal;
+        text-align: right;
+    }
+    .setting-item input, .setting-item select {
+        padding: 4px 8px;
+        height: 24px;
+        font-size: 13px;
+        border: 1px solid #ccc;
+        border-radius: 4px;
+        width: 100%;
+        box-sizing: border-box;
+    }
+    .setting-item select {
+        padding: 2px 8px 2px 6px;
+    }
+
+    .empty-settings { color: #999; font-size: 12px; font-style: italic; text-align: center; margin-top: 20px; }
+    .filter-check { display: flex; align-items: center; gap: 5px; font-size: 13px; color: #666; cursor: pointer; }
+
+    .field-setting-group { margin-bottom: 25px; border-bottom: 1px solid #eee; padding-bottom: 15px; }
+    .field-setting-group:last-child { border-bottom: none; }
+    .field-header { font-weight: bold; font-size: 12px; color: #2196F3; margin-bottom: 10px; text-transform: uppercase; letter-spacing: 0.5px; }
+
+    .type-builder-modal {
+        width: 60vw; /* Smaller default size */
+        max-width: 1400px;
+        height: 60vh; /* Smaller default size */
+        overflow: hidden;
+        display: flex;
+        flex-direction: column;
+        resize: both;
+        position: relative;
+        pointer-events: auto; /* Re-enable clicks on the modal itself */
+        box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+        border: 1px solid #ccc;
+    }
+    
+    .modal-header.draggable {
+        cursor: move;
+        background: #f1f1f1;
+        border-bottom: 1px solid #ddd;
+        flex-shrink: 0;
+        height: 35px; /* Compact header */
+        padding: 0 10px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+    }
+    
+    .modal-header.draggable:active {
+        background: #e0e0e0;
+    }
+  `]
+})
+export class BBTypeListComponent implements OnInit {
+  @HostListener('document:mousemove', ['$event'])
+  onDragMove(event: MouseEvent) {
+    if (this.isDragging) {
+      this.modalTransform = {
+        x: event.clientX - this.dragStart.x,
+        y: event.clientY - this.dragStart.y
+      };
+    }
+  }
+
+  @HostListener('document:mouseup')
+  onDragEnd() {
+    this.isDragging = false;
+  }
+
+  modalTransform = { x: 0, y: 0 };
+  private isDragging = false;
+  private dragStart = { x: 0, y: 0 };
+
+  startDrag(event: MouseEvent) {
+    if ((event.target as HTMLElement).tagName.toLowerCase() === 'button') return; // Don't drag if clicking close button
+    this.isDragging = true;
+    this.dragStart = {
+      x: event.clientX - this.modalTransform.x,
+      y: event.clientY - this.modalTransform.y
+    };
+    event.preventDefault(); // Prevent text selection
+  }
+  @Input() appConfig: AppConfig | null = null;
+  @Output() appConfigChange = new EventEmitter<AppConfig>();
+
+  types$: Observable<BBType[]>;
+  view: 'list' | 'create' = 'list';
+  editingType: BBType | null = null;
+
+  // Filter options - default to showing only User Defined
+  showSystem = false;
+  showTypeDefined = false;
+  showUserDefined = true;
+
+  // Test Editor State
+  testingType: BBType | null = null;
+  testValue: any = null;
+  showTestSidebar = false;
+  selectedEditorId = 'default';
+  testSettings: Record<string, any> = {};
+
+  get groupedSettings(): { fieldName: string, settings: BBSettingDefinition[] }[] {
+    const type = this.testingType;
+    if (!type || !this.selectedEditorId) return [];
+
+    const results: { fieldName: string, settings: BBSettingDefinition[] }[] = [];
+
+    // 1. Root editor settings
+    let rootEditor = (type.editors || []).find(e => e.id === this.selectedEditorId);
+    console.log('[groupedSettings] selectedEditorId:', this.selectedEditorId, 'found editor:', rootEditor?.name);
+    if (!rootEditor) {
+      rootEditor = type.editors.find(e => e.id === 'default') || type.editors[0];
+      console.log('[groupedSettings] Using fallback editor:', rootEditor?.name);
+    }
+    if (rootEditor?.settingDefinitions?.length) {
+      console.log('[groupedSettings] Root editor settings:', rootEditor.settingDefinitions.map(s => s.id));
+      // Sort: Put Settings ending in ".Editor" at the top
+      const sortedSettings = [...rootEditor.settingDefinitions].sort((a, b) => {
+        const aIsEditor = a.id.endsWith('.Editor');
+        const bIsEditor = b.id.endsWith('.Editor');
+        if (aIsEditor && !bIsEditor) return -1;
+        if (!aIsEditor && bIsEditor) return 1;
+        return 0;
+      });
+      results.push({ fieldName: '*', settings: sortedSettings });
+    }
+
+    // 2. Discover sub-field settings
+    if (type.fields) {
+      for (const field of type.fields) {
+        const fieldType = this.bbTypeService.getTypes().find(t => t.id === field.typeId);
+        if (fieldType) {
+          let defaultEditor = fieldType.editors?.find(e => e.id === 'default') || fieldType.editors?.[0];
+          if (defaultEditor?.settingDefinitions?.length) {
+            results.push({ fieldName: field.name, settings: defaultEditor.settingDefinitions });
+          }
+        }
+      }
+    } else if (type.baseType === 'List' || type.baseType === 'Dict') {
+      const subType = this.bbTypeService.getTypes().find(t => t.id === type.subtypeId);
+      if (subType) {
+        const defaultEditor = subType.editors?.find(e => e.id === 'default') || subType.editors?.[0];
+        if (defaultEditor?.settingDefinitions?.length) {
+          results.push({ fieldName: 'item', settings: defaultEditor.settingDefinitions });
+        }
+      }
+    }
+
+    return results;
+  }
+
+  constructor(private bbTypeService: BBTypeService) {
+    this.types$ = this.bbTypeService.types$.pipe(
+      map(types => {
+        let baseTypes = types.filter(t => !t.isAnonymous);
+
+        // Filter by source type
+        baseTypes = baseTypes.filter(t => {
+          if (t.source === 'System' && this.showSystem) return true;
+          if (t.source === 'Type Defined' && this.showTypeDefined) return true;
+          if (t.source === 'User Defined' && this.showUserDefined) return true;
+          return false;
+        });
+
+        if (this.appConfig) {
+          // Merge system types with app-specific custom types
+          const systemTypes = baseTypes.filter(t => !t.userDefined);
+          return [...systemTypes, ...this.appConfig.types.filter(t => !t.isAnonymous && this.shouldShowType(t))];
+        }
+        return baseTypes;
+      })
+    );
+  }
+
+  private shouldShowType(type: BBType): boolean {
+    if (type.source === 'System' && this.showSystem) return true;
+    if (type.source === 'Type Defined' && this.showTypeDefined) return true;
+    if (type.source === 'User Defined' && this.showUserDefined) return true;
+    return false;
+  }
+
+  onFilterChange() {
+    // Re-trigger observable if needed, but it's already piped to bbTypeService.types$
+    // We can manually trigger it by adding an update subject if we want immediate UI refresh without service change
+    // But actually, just changing hideCoreTypes will be picked up on next emission.
+    // To force it, we can use a combineLatest with a refresh subject.
+    this.bbTypeService['typesSubject'].next(this.bbTypeService.getTypes());
+  }
+
+  ngOnInit() { }
+
+  editType(type: BBType) {
+    this.editingType = type;
+    this.view = 'create';
+  }
+
+  cancelEdit() {
+    this.editingType = null;
+    this.view = 'list';
+  }
+
+  resetAll() {
+    if (confirm('Are you sure you want to clear ALL custom types? This cannot be undone.')) {
+      if (this.appConfig) {
+        this.appConfig.types = [];
+        this.appConfigChange.emit(this.appConfig);
+        window.location.reload();
+      } else {
+        this.bbTypeService.clearAllTypes();
+        window.location.reload();
+      }
+    }
+  }
+
+  onTypeCreated(newType: BBType) {
+    if (this.appConfig) {
+      if (this.editingType) {
+        const index = this.appConfig.types.findIndex(t => t.id === newType.id);
+        if (index >= 0) this.appConfig.types[index] = newType;
+        this.editingType = null;
+      } else {
+        this.appConfig.types.push(newType);
+      }
+      this.appConfigChange.emit(this.appConfig);
+    } else {
+      if (this.editingType) {
+        this.bbTypeService.updateType(newType);
+        this.editingType = null;
+      } else {
+        this.bbTypeService.addType(newType);
+      }
+    }
+    this.view = 'list';
+  }
+
+  getTypeName(id?: string): string {
+    if (!id) return '?';
+    const types = this.bbTypeService.getTypes();
+    const t = types.find(x => x.id === id) || types.find(x => x.id.toLowerCase() === id.toLowerCase());
+
+    if (t && t.isAnonymous) {
+      return `Anonymous ${t.baseType}`;
+    }
+    return t ? t.name : id;
+  }
+
+  openTestEditor(type: BBType) {
+    this.testingType = type;
+    this.testValue = this.getDefaultValue(type);
+    // Use the default editor (id='default') which contains the user's default choice
+    const defaultEditor = type.editors?.find(e => e.id === 'default');
+    this.selectedEditorId = defaultEditor?.id || type.editors?.[0]?.id || 'default';
+    this.testSettings = {
+      'UI.EditMode': 'edit',
+      'UI.Size': 'medium'
+    };
+    this.activeOverrides = [];
+
+    // Don't pre-populate Type.Editor - let it be selected by user or remain empty
+    // The dropdown will show available editors for each field's type dynamically
+
+    this.showTestSidebar = true;
+  }
+
+  closeTestEditor() {
+    this.testingType = null;
+    this.testValue = null;
+    this.testSettings = {};
+    this.activeOverrides = [];
+  }
+
+
+  getTestOverrideValue(fieldName: string, settingId: string): any {
+    const override = this.activeOverrides.find(o => o.fieldName === fieldName && o.settingId === settingId);
+    if (override) return override.value;
+
+    // Use intrinsic field value if it's a root setting matching a BBType property
+    if (fieldName === '*' && this.testingType) {
+      const parts = settingId.split('.');
+      const propName = parts.length > 1 ? parts[1] : parts[0];
+      // Lowercase the first char to match BBType property names (e.g. MaxLen -> maxLen)
+      const camelProp = propName.charAt(0).toLowerCase() + propName.slice(1);
+
+      if (camelProp in this.testingType) {
+        let val = (this.testingType as any)[camelProp];
+        // Special case: if it's a number/boolean expected by the editor but stored as 1/0
+        return val;
+      }
+    }
+    return undefined;
+  }
+
+  activeOverrides: any[] = []; // BBSettingOverride[]
+
+  updateTestOverride(fieldName: string, settingId: string, value: any) {
+    const idx = this.activeOverrides.findIndex(o => o.fieldName === fieldName && o.settingId === settingId);
+    if (idx >= 0) {
+      if (value === null || value === undefined) this.activeOverrides.splice(idx, 1);
+      else this.activeOverrides[idx].value = value;
+    } else if (value !== null && value !== undefined) {
+      this.activeOverrides.push({ fieldName, settingId, value });
+    }
+
+    // Sync editor variant if settingId is an Editor setting for the root
+    if (fieldName === '*' && settingId.endsWith('.Editor')) {
+      this.selectedEditorId = value;
+    }
+
+    this.refreshTestSettings();
+  }
+
+  // Get the subtypeId for a setting - for Type.Editor, use the field's/item's typeId
+  getTestSettingSubtypeId(def: BBSettingDefinition, fieldName: string): string | undefined {
+    console.log('[getTestSettingSubtypeId] Called! def.id:', def.id, 'fieldName:', fieldName);
+    if (def.id === 'Type.Editor') {
+      // For root type (*), determine which type's editors to show
+      if (fieldName === '*' && this.testingType) {
+        // User-defined types inherit editors from their source/base type
+        // 1. If it's based on a source type (e.g., Gender based on Boolean), use sourceType
+        if (this.testingType.sourceType) {
+          console.log('[getTestSettingSubtypeId] Type.Editor for root - returning sourceType:', this.testingType.sourceType);
+          return this.testingType.sourceType;
+        }
+        // 2. For container types (Struct/Union/List), use the base type
+        if (this.testingType.baseType === 'Struct') {
+          console.log('[getTestSettingSubtypeId] Type.Editor for root - returning struct');
+          return 'struct';
+        }
+        if (this.testingType.baseType === 'Union') return 'union';
+        if (this.testingType.baseType === 'List') return 'list';
+        // 3. For core types, use the type's own ID
+        console.log('[getTestSettingSubtypeId] Type.Editor for root - returning type.id:', this.testingType.id);
+        return this.testingType.id;
+      }
+      // For named fields, find the field's type
+      if (fieldName !== '*' && this.testingType?.fields) {
+        const field = this.testingType.fields.find(f => f.name === fieldName);
+        if (field) {
+          console.log('[getTestSettingSubtypeId] Type.Editor for field', fieldName, '- returning field.typeId:', field.typeId);
+          return field.typeId;
+        }
+      }
+      // For 'item' (List/Dict), use the subtype
+      if (fieldName === 'item' && this.testingType?.subtypeId) {
+        return this.testingType.subtypeId;
+      }
+    }
+    return def.subtypeId;
+  }
+
+  refreshTestSettings() {
+    this.testSettings = { ...this.testSettings, _refresh: Date.now() };
+  }
+
+  getDefaultValue(type: BBType): any {
+    if (type.baseType === 'Struct' || type.baseType === 'Union' || type.baseType === 'Dict') {
+      return {};
+    } else if (type.baseType === 'List') {
+      return [];
+    } else if (type.values && type.values.length > 0) {
+      return null; // Enum - no default
+    } else {
+      // Core types
+      const root = type.baseType === 'Core' ? type.name : undefined;
+      switch (root) {
+        case 'String': return '';
+        case 'Int': return 0;
+        case 'Boolean': return false;
+        case 'File': return null;
+        case 'Date': return null;
+        case 'Dict': return {};
+        default: return null;
+      }
+    }
+  }
+
+  isTypeRef(id: string): boolean {
+    return this.bbTypeService.isTypeReferenced(id);
+  }
+
+  getRefNames(id: string): string {
+    const refs = this.bbTypeService.getTypesReferencing(id);
+    return refs.map(t => t.name).join(', ');
+  }
+
+  deleteType(type: BBType) {
+    if (confirm(`Delete type "${type.name}"?`)) {
+      if (this.appConfig) {
+        this.appConfig.types = this.appConfig.types.filter(t => t.id !== type.id);
+        this.appConfigChange.emit(this.appConfig);
+      } else {
+        this.bbTypeService.deleteType(type.id);
+      }
+    }
+  }
+
+  getBasedOnTypeName(type: BBType): string {
+    // For user-defined types, determine what they're based on
+    if (type.baseType === 'Struct') return 'Struct';
+    if (type.baseType === 'List') return 'List';
+    if (type.baseType === 'Dict') return 'Dict';
+    if (type.baseType === 'Union') return 'Union';
+    if (type.baseType === 'Basic' && type.subtypeId) {
+      // Basic types - show the core type they're based on
+      const baseType = this.bbTypeService.getTypes().find(t => t.id === type.subtypeId);
+      return baseType?.name || type.subtypeId;
+    }
+    if (type.baseType === 'Core') {
+      // Core-based types (Boolean, String, Number) - detect which one
+      if (type.values && type.values.length === 2) return 'Boolean';
+      if (type.allowNegative !== undefined || type.allowDecimals !== undefined) return 'Number';
+      if (type.validationRules !== undefined || type.maxLen !== undefined) return 'String';
+      if (type.id === 'file') return 'File';
+      if (type.id === 'date') return 'Date';
+    }
+    return type.baseType;
+  }
+
+  downloadConfig() {
+    const types = this.appConfig ? this.appConfig.types : this.bbTypeService.getTypes().filter(t => t.userDefined);
+    const filename = this.appConfig ? `${this.appConfig.slug}-types.json` : "bb-types-config.json";
+    const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(types, null, 2));
+    const downloadAnchorNode = document.createElement('a');
+    downloadAnchorNode.setAttribute("href", dataStr);
+    downloadAnchorNode.setAttribute("download", filename);
+    document.body.appendChild(downloadAnchorNode);
+    downloadAnchorNode.click();
+    downloadAnchorNode.remove();
+  }
+
+  loadConfig(event: any) {
+    const file = event.target.files[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = (e: any) => {
+      try {
+        const types = JSON.parse(e.target.result);
+        if (this.appConfig) {
+          this.appConfig.types = [...this.appConfig.types, ...types];
+          this.appConfigChange.emit(this.appConfig);
+        } else {
+          this.bbTypeService.importTypes(types);
+        }
+      } catch (err) {
+        console.error('Invalid JSON', err);
+        alert('Failed to load JSON');
+      }
+    };
+    reader.readAsText(file);
+    event.target.value = '';
+  }
+}
