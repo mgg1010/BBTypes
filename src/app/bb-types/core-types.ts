@@ -145,6 +145,7 @@ export const INITIAL_CORE_TYPES: BBType[] = [
         userDefined: false,
         source: 'System',
         fieldBaseType: true,
+        sortPosition: 5,
         // Intrinsic fields
         allowNegative: true,
         allowNegativeMsg: 'Number cannot be negative',
