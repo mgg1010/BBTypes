@@ -12,6 +12,8 @@ import { ExpressionEditorComponent } from './expression-editor.component';
     <div 
         class="editor-container" 
         [ngClass]="[size, isDragging ? 'dragging' : '']"
+        [style.font-family]="settings['Editor.StdFont'] || 'system-ui, -apple-system, sans-serif'"
+        [style.font-size]="settings['Editor.StdFontSize'] || '13px'"
         (dragover)="onDragOver($event)"
         (dragleave)="onDragLeave($event)"
         (drop)="onDrop($event)">

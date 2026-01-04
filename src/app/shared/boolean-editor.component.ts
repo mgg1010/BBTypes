@@ -12,6 +12,8 @@ import { ExpressionEditorComponent } from './expression-editor.component';
     <div 
         class="editor-container" 
         [ngClass]="[size, isDragging ? 'dragging' : '']"
+        [style.font-family]="settings['Editor.StdFont'] || 'system-ui, -apple-system, sans-serif'"
+        [style.font-size]="settings['Editor.StdFontSize'] || '13px'"
         (dragover)="onDragOver($event)"
         (dragleave)="onDragLeave($event)"
         (drop)="onDrop($event)">
@@ -72,10 +74,9 @@ import { ExpressionEditorComponent } from './expression-editor.component';
     }
 
     .editor-value {
-      font-weight: 500;
+      /* No custom font styling - use system defaults */
     }
-    .editor-value.true { color: green; }
-    .editor-value.false { color: red; }
+
 
     /* Sizes */
     .small.editor-container {
@@ -84,18 +85,12 @@ import { ExpressionEditorComponent } from './expression-editor.component';
     .small .editor-checkbox {
       transform: scale(0.8);
     }
-    .small .editor-value {
-      font-size: 12px;
-    }
 
     .medium.editor-container {
         height: 30px;
     }
     .medium .editor-checkbox {
       transform: scale(1.0);
-    }
-    .medium .editor-value {
-      font-size: 16px;
     }
   `]
 })
@@ -104,6 +99,7 @@ export class BooleanEditorComponent implements IEditorComponent<number> {
   @Input() mode: EditorMode = 'read';
   @Input() size: EditorSize = 'medium';
   @Input() isDisabled = false;
+  @Input() settings: Record<string, any> = {};
   @Output() valueChange = new EventEmitter<number>();
   @Output() modeChange = new EventEmitter<EditorMode>();
 

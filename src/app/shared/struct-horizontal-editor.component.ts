@@ -13,7 +13,10 @@ import { GenericEditorDialogComponent } from './generic-editor-dialog.component'
     imports: [CommonModule, FormsModule, DynamicFieldComponent, GenericEditorDialogComponent],
     changeDetection: ChangeDetectionStrategy.OnPush,
     template: `
-    <div class="struct-horizontal-container" [style.gap.px]="gap">
+    <div class="struct-horizontal-container" 
+         [style.gap.px]="gap"
+         [style.--std-font]="stdFont"
+         [style.--std-font-size]="stdFontSize">
         @for (field of visibleFields; track $index) {
             <div class="field-wrapper" 
                  [style.flex-basis.px]="minWidth ? minWidth : 'auto'"
@@ -63,7 +66,8 @@ import { GenericEditorDialogComponent } from './generic-editor-dialog.component'
     .struct-horizontal-container { display: flex; flex-direction: row; align-items: flex-end; flex-wrap: wrap; }
     .field-wrapper { display: flex; flex-direction: column; flex: 1; border: 1px solid #ddd; padding: 4px; border-radius: 3px; }
     .field-label { font-weight: 600; font-size: 11px; color: #555; margin-bottom: 4px; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
-    .field-editor { width: 100%; font-family: system-ui, -apple-system, sans-serif; font-weight: normal; color: #000; }
+    .field-editor { width: 100%; }
+    
     .buttons-wrapper { display: flex; gap: 5px; margin-left: 10px; align-self: flex-end; margin-bottom: 2px; } 
     .action-btn { background: #eee; border: 1px solid #ccc; border-radius: 3px; padding: 4px 10px; cursor: pointer; font-size: 12px; }
     .action-btn:hover { background: #ddd; }
@@ -90,6 +94,8 @@ export class StructHorizontalEditorComponent implements IEditorComponent<any>, O
     showHeaders: boolean = false;
     minWidth: number = 0;
     maxWidth: number = 1000;
+    stdFont: string = 'system-ui, -apple-system, sans-serif';
+    stdFontSize: string = '13px';
 
     // Modal State
     showModal = false;
@@ -116,6 +122,10 @@ export class StructHorizontalEditorComponent implements IEditorComponent<any>, O
         // Min/Max Width
         this.minWidth = this.settings['Editor.ControlMinWidth'] || 0;
         this.maxWidth = this.settings['Editor.ControlMaxWidth'] || 1000;
+
+        // Font Settings
+        this.stdFont = this.settings['Editor.StdFont'] || 'system-ui, -apple-system, sans-serif';
+        this.stdFontSize = this.settings['Editor.StdFontSize'] || '13px';
 
         // Buttons
         this.buttons = this.settings['Struct.HorzEdit.Buttons'] || [];
