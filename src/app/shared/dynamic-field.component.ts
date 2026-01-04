@@ -279,7 +279,9 @@ export class DynamicFieldComponent implements OnChanges {
         const instance = this.componentRef.instance;
 
         instance.subtypeId = type.subtypeId;
-        if (type.fields) instance.fields = [...type.fields];
+        // Get fields from settings (modern approach) or fallback to type.fields (legacy)
+        const fields = settings['Struct.Fields'] || type.fields;
+        if (fields) instance.fields = [...fields];
         if (type.values) instance.values = [...type.values];
         (instance as any).bbType = type;
 

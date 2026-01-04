@@ -341,9 +341,10 @@ export class BBTypeService {
                 continue;
             }
 
-            // Check field usage (Struct, Union)
-            if (type.fields) {
-                const fieldUsage = type.fields.find(f => f.typeId === typeId);
+            // Check field usage (Struct, Union) - check both modern and legacy locations
+            const fields = type.settings?.['Struct.Fields'] || type.fields;
+            if (fields) {
+                const fieldUsage = fields.find((f: any) => f.typeId === typeId);
                 if (fieldUsage) {
                     referencingTypes.push(type);
                     continue;
