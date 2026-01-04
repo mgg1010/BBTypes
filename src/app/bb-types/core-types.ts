@@ -66,6 +66,7 @@ export const INITIAL_CORE_TYPES: BBType[] = [
             { id: 'Type.Editors', name: 'Editors', typeId: 'List', subtypeId: 'BBEditor', mustOverride: true, noDelete: true }
         ],
         settings: {
+            'Type.Kind': '0',
             'Type.Editor': 'StringEdit'
         },
         editors: [{
@@ -133,6 +134,7 @@ export const INITIAL_CORE_TYPES: BBType[] = [
             { id: 'Type.Editors', name: 'Editors', typeId: 'List', subtypeId: 'BBEditor', mustOverride: true, noDelete: true }
         ],
         settings: {
+            'Type.Kind': '0',
             'Type.Editor': 'NumberEdit'
         },
         editors: [{
@@ -198,6 +200,7 @@ export const INITIAL_CORE_TYPES: BBType[] = [
             { id: 'Type.Editors', name: 'Editors', typeId: 'List', subtypeId: 'BBEditor', mustOverride: true, noDelete: true }
         ],
         settings: {
+            'Type.Kind': '0',
             'Type.Editor': 'BoolCheckBox'
         },
         editors: [
@@ -252,6 +255,7 @@ export const INITIAL_CORE_TYPES: BBType[] = [
             { id: 'Type.Editors', name: 'Editors', typeId: 'List', subtypeId: 'BBEditor', mustOverride: true, noDelete: true }
         ],
         settings: {
+            'Type.Kind': '0',
             'Type.Editor': 'DateEdit'
         },
         editors: [{
@@ -277,6 +281,7 @@ export const INITIAL_CORE_TYPES: BBType[] = [
             { id: 'Type.Editors', name: 'Editors', typeId: 'List', subtypeId: 'BBEditor', mustOverride: true, noDelete: true }
         ],
         settings: {
+            'Type.Kind': '0',
             'Type.Editor': 'FileEdit'
         },
         editors: [{
@@ -315,6 +320,7 @@ export const INITIAL_CORE_TYPES: BBType[] = [
             { id: 'Type.Editors', name: 'Editors', typeId: 'List', subtypeId: 'BBEditor', mustOverride: true, noDelete: true }
         ],
         settings: {
+            'Type.Kind': '0',
             'Type.Editor': 'FontEdit'
         },
         editors: [{
@@ -355,6 +361,7 @@ export const INITIAL_CORE_TYPES: BBType[] = [
             { id: 'Type.Editors', name: 'Editors', typeId: 'List', subtypeId: 'BBEditor', mustOverride: true, noDelete: true }
         ],
         settings: {
+            'Type.Kind': '0',
             'Type.Editor': 'EnumEdit'
         },
         editors: [{
@@ -392,6 +399,7 @@ export const INITIAL_CORE_TYPES: BBType[] = [
             { id: 'Type.Editors', name: 'Editors', typeId: 'List', subtypeId: 'BBEditor', mustOverride: true, noDelete: true }
         ],
         settings: {
+            'Type.Kind': '0',
             'Type.Editor': 'ListEdit'
         },
         editors: [{
@@ -433,6 +441,7 @@ export const INITIAL_CORE_TYPES: BBType[] = [
             { id: 'Type.Editors', name: 'Editors', typeId: 'List', subtypeId: 'BBEditor', mustOverride: true, noDelete: true }
         ],
         settings: {
+            'Type.Kind': '0',
             'Type.Editor': 'DictEdit'
         },
         editors: [{
@@ -461,6 +470,7 @@ export const INITIAL_CORE_TYPES: BBType[] = [
         ],
         fields: [],
         settings: {
+            'Type.Kind': '0',
             'Type.Editor': 'VertEdit'
         },
         editors: [{
@@ -534,6 +544,7 @@ export const INITIAL_CORE_TYPES: BBType[] = [
         ],
         fields: [],
         settings: {
+            'Type.Kind': '0',
             'Type.Editor': 'UnionEdit'
         },
         editors: [{
@@ -665,6 +676,7 @@ export const INITIAL_CORE_TYPES: BBType[] = [
             { id: 'Type.Editors', name: 'Editors', typeId: 'List', subtypeId: 'BBEditor', mustOverride: true, noDelete: true }
         ],
         settings: {
+            'Type.Kind': '0',
             'Type.Editor': 'VertEdit'
         },
         editors: [
@@ -708,6 +720,7 @@ export const INITIAL_CORE_TYPES: BBType[] = [
             { id: 'Type.Editors', name: 'Editors', typeId: 'List', subtypeId: 'BBEditor', mustOverride: true, noDelete: true }
         ],
         settings: {
+            'Type.Kind': '0',
             'Type.Editor': 'VertEdit'
         },
         editors: [
@@ -753,6 +766,7 @@ export const INITIAL_CORE_TYPES: BBType[] = [
         ],
 
         settings: {
+            'Type.Kind': '0',
             'Type.Editor': 'TypePick'
         },
         values: [], // Populated dynamically based on settings
@@ -785,6 +799,7 @@ export const INITIAL_CORE_TYPES: BBType[] = [
 
         values: [], // Populated dynamically based on selected type's editors
         settings: {
+            'Type.Kind': '0',
             'Type.Editor': 'EditPick'
         },
         editors: [{
@@ -810,6 +825,7 @@ export const INITIAL_CORE_TYPES: BBType[] = [
         source: 'System',
         fieldBaseType: false,
         settings: {
+            'Type.Kind': '1',
             'Type.Editor': 'VertEdit'
         },
         editors: [{
