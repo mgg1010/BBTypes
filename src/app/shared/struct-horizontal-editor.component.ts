@@ -61,9 +61,9 @@ import { GenericEditorDialogComponent } from './generic-editor-dialog.component'
     styles: [`
     :host { display: block; width: 100%; }
     .struct-horizontal-container { display: flex; flex-direction: row; align-items: flex-end; flex-wrap: wrap; }
-    .field-wrapper { display: flex; flex-direction: column; flex: 1; }
+    .field-wrapper { display: flex; flex-direction: column; flex: 1; border: 1px solid #ddd; padding: 4px; border-radius: 3px; }
     .field-label { font-weight: 600; font-size: 11px; color: #555; margin-bottom: 4px; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
-    .field-editor { width: 100%; }
+    .field-editor { width: 100%; font-family: system-ui, -apple-system, sans-serif; font-weight: normal; color: #000; }
     .buttons-wrapper { display: flex; gap: 5px; margin-left: 10px; align-self: flex-end; margin-bottom: 2px; } 
     .action-btn { background: #eee; border: 1px solid #ccc; border-radius: 3px; padding: 4px 10px; cursor: pointer; font-size: 12px; }
     .action-btn:hover { background: #ddd; }
