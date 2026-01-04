@@ -12,7 +12,7 @@ import { DynamicFieldComponent } from '../shared/dynamic-field.component';
 import { PublishedSettingsTabComponent } from './tabs/published-settings-tab.component';
 import { ShowAllPropertiesDialogComponent } from './dialogs/show-all-properties-dialog.component';
 import { ElementRef } from '@angular/core';
-import { getVertEditSettings } from './bb-builder-helpers';
+import { getVertEditSettings, getHorzEditSettings } from './bb-builder-helpers';
 import { calculateControlWidth } from './layout-helpers';
 
 @Component({
@@ -1073,6 +1073,17 @@ export class BBTypeBuilderComponent implements OnInit {
 
         if (editorId === 'VertEdit') {
           list = getVertEditSettings();
+          // Bind values from type settings, preserving defaults if not set
+          list.forEach(item => {
+            if (item.settingDef) {
+              const settingValue = this.newType.settings?.[item.settingDef.id];
+              if (settingValue !== undefined) {
+                item.value = settingValue;
+              }
+            }
+          });
+        } else if (editorId === 'HorzEdit') {
+          list = getHorzEditSettings();
           // Bind values from type settings, preserving defaults if not set
           list.forEach(item => {
             if (item.settingDef) {

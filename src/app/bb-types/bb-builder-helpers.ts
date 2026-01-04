@@ -58,5 +58,18 @@ export function getVertEditSettings(): BBSettingListItem[] {
         settingDef: { id: 'Struct.VertEdit.PromptMaxSpace', name: 'Struct.VertEdit.PromptMaxSpace', typeId: 'Number' }
     });
 
+
+    return list;
+}
+
+export function getHorzEditSettings(): BBSettingListItem[] {
+    const list: BBSettingListItem[] = [];
+
+    // Header
+    list.push({ id: 'h1_base', label: 'Base Editor Settings', type: 'header', scope: 'root' });
+
+    // Horizontal editor might have different settings in the future
+    // For now, keeping it simple - just showing it has potential for settings
+
     return list;
 }
