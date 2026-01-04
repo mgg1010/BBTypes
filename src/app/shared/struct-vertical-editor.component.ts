@@ -174,11 +174,7 @@ export class StructVerticalEditorComponent implements IEditorComponent<any>, OnI
 
     // Get fields from settings (modern) or bbType.fields (legacy)
     get fields(): BBField[] {
-        const result = this.settings['Struct.Fields'] || this.bbType?.fields || [];
-        if (this.bbType?.id === 'BBField' || this.bbType?.id === 'BBEditor') {
-            console.log(`[struct-vertical] ${this.bbType.id} fields:`, result, 'settings:', this.settings, 'bbType:', this.bbType);
-        }
-        return result;
+        return this.settings['Struct.Fields'] || this.bbType?.fields || [];
     }
 
     constructor(private bbTypeService: BBTypeService) { }

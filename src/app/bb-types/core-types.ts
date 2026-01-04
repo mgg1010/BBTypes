@@ -712,10 +712,11 @@ export const INITIAL_CORE_TYPES: BBType[] = [
             'Type.Kind': '0',
             'Type.Editor': 'VertEdit',
             'Struct.Fields': [
-                { name: 'name', typeId: 'String' },
-                { name: 'typeId', typeId: 'String' },
-                { name: 'label', typeId: 'String' },
-                { name: 'description', typeId: 'String' }
+                { name: 'Prompt', typeId: 'String' },
+                { name: 'TypeID', typeId: 'String' },
+                { name: 'FieldID', typeId: 'String' },
+                { name: 'Required', typeId: 'Boolean' },
+                { name: 'Description', typeId: 'String' }
             ]
         },
         editors: [
