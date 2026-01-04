@@ -71,6 +71,7 @@ import { BBTypeService } from '../services/bb-type.service';
                     [settings]="settings"
                     [fieldName]="'[' + $index + ']'"
                     [isDisabled]="isDisabled"
+                    [runtimeOverrides]="runtimeOverrides || []"
                     (valueChange)="onItemChange($index, $event)">
                   </app-dynamic-field>
                } @else {
@@ -283,6 +284,7 @@ export class ListEditorComponent implements IEditorComponent<any[]>, OnInit {
   @Input() subtypeId?: string; // For Dynamic Field resolution
   @Input() appConfig: AppConfig | null = null;
   @Input() isDisabled = false;
+  @Input() runtimeOverrides?: any[]; // Runtime overrides to pass to child items
   @Output() valueChange = new EventEmitter<any[]>();
 
 
