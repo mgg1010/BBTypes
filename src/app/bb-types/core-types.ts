@@ -25,23 +25,35 @@ function getTypeEditorSetting(typeName: string): BBSettingDefinition {
 }
 
 // Helper: Get Type.Kind setting for a type
-// Returns read-only enum setting indicating if type is System (0), TypeDefined (1), or User (2)
-function getTypeKindSetting(kind: '0' | '1' | '2' = '0'): BBSettingDefinition {
+// Returns read-only setting referencing the Type.Kind enum
+function getTypeKindSetting(): BBSettingDefinition {
     return {
         id: 'Type.Kind',
         name: 'Type Kind',
-        typeId: 'Enum',
+        typeId: 'Type.Kind',  // Reference the anonymous enum type
+        readOnly: true
+    };
+}
+
+export const INITIAL_CORE_TYPES: BBType[] = [
+    // --- Anonymous Enum: Type.Kind ---
+    {
+        id: 'Type.Kind',
+        name: 'Type Kind',
+        baseType: null,
+        userDefined: false,
+        source: 'System',
+        fieldBaseType: false,
         values: [
             { Id: '0', Text: 'System' },
             { Id: '1', Text: 'TypeDefined' },
             { Id: '2', Text: 'User' }
         ],
-        readOnly: true,
-        defaultValue: kind
-    };
-}
+        settingDefinitions: [],
+        settings: {},
+        editors: []
+    },
 
-export const INITIAL_CORE_TYPES: BBType[] = [
     // --- Primitives / Core Types ---
     {
         id: 'String',
@@ -58,7 +70,7 @@ export const INITIAL_CORE_TYPES: BBType[] = [
         minLen: 0,
         minLenMsg: 'Must be %d characters or more',
         settingDefinitions: [
-            getTypeKindSetting('0'),
+            getTypeKindSetting(),
             { id: 'String.MinLen', name: 'Min Length', typeId: 'Number' },
             { id: 'String.MinLenMsg', name: 'Min Length Message', typeId: 'String' },
             { id: 'String.MaxLen', name: 'Max Length', typeId: 'Number' },
@@ -118,7 +130,7 @@ export const INITIAL_CORE_TYPES: BBType[] = [
 
         // Type Settings
         settingDefinitions: [
-            getTypeKindSetting('0'),
+            getTypeKindSetting(),
             { id: 'Number.AllowNegative', name: 'Allow Negative', typeId: 'Boolean' },
             { id: 'Number.AllowNegativeMsg', name: 'Allow Negative Message', typeId: 'String' },
             { id: 'Number.AllowDecimals', name: 'Allow Decimals', typeId: 'Boolean' },
@@ -195,7 +207,7 @@ export const INITIAL_CORE_TYPES: BBType[] = [
             { Id: 1, Text: 'True' }
         ],
         settingDefinitions: [
-            getTypeKindSetting('0'),
+            getTypeKindSetting(),
             { id: 'Enum.Options', name: 'Options', typeId: 'List', subtypeId: 'IDString' },
             { id: 'Type.Editors', name: 'Editors', typeId: 'List', subtypeId: 'BBEditor', mustOverride: true, noDelete: true }
         ],
@@ -251,7 +263,7 @@ export const INITIAL_CORE_TYPES: BBType[] = [
         source: 'System',
         fieldBaseType: true,
         settingDefinitions: [
-            getTypeKindSetting('0'),
+            getTypeKindSetting(),
             { id: 'Type.Editors', name: 'Editors', typeId: 'List', subtypeId: 'BBEditor', mustOverride: true, noDelete: true }
         ],
         settings: {
@@ -277,7 +289,7 @@ export const INITIAL_CORE_TYPES: BBType[] = [
         source: 'System',
         fieldBaseType: true,
         settingDefinitions: [
-            getTypeKindSetting('0'),
+            getTypeKindSetting(),
             { id: 'Type.Editors', name: 'Editors', typeId: 'List', subtypeId: 'BBEditor', mustOverride: true, noDelete: true }
         ],
         settings: {
@@ -315,7 +327,7 @@ export const INITIAL_CORE_TYPES: BBType[] = [
             { Id: 'Brush Script MT', Text: 'Brush Script MT' }
         ],
         settingDefinitions: [
-            getTypeKindSetting('0'),
+            getTypeKindSetting(),
             { id: 'Font.AllowedValues', name: 'Allowed Values', typeId: 'List', subtypeId: 'IDString' },
             { id: 'Type.Editors', name: 'Editors', typeId: 'List', subtypeId: 'BBEditor', mustOverride: true, noDelete: true }
         ],
@@ -356,7 +368,7 @@ export const INITIAL_CORE_TYPES: BBType[] = [
         // Type Settings
         values: [], // Default empty options
         settingDefinitions: [
-            getTypeKindSetting('0'),
+            getTypeKindSetting(),
             { id: 'Enum.Options', name: 'Options', typeId: 'List', subtypeId: 'IDString' },
             { id: 'Type.Editors', name: 'Editors', typeId: 'List', subtypeId: 'BBEditor', mustOverride: true, noDelete: true }
         ],
@@ -394,7 +406,7 @@ export const INITIAL_CORE_TYPES: BBType[] = [
         subtypeId: 'String', // Default subtype
         // Type Settings
         settingDefinitions: [
-            getTypeKindSetting('0'),
+            getTypeKindSetting(),
             { id: 'List.Ordered', name: 'Ordered', typeId: 'Boolean', description: 'If true, the list order is important' },
             { id: 'Type.Editors', name: 'Editors', typeId: 'List', subtypeId: 'BBEditor', mustOverride: true, noDelete: true }
         ],
@@ -437,7 +449,7 @@ export const INITIAL_CORE_TYPES: BBType[] = [
         source: 'System',
         fieldBaseType: true,
         settingDefinitions: [
-            getTypeKindSetting('0'),
+            getTypeKindSetting(),
             { id: 'Type.Editors', name: 'Editors', typeId: 'List', subtypeId: 'BBEditor', mustOverride: true, noDelete: true }
         ],
         settings: {
@@ -463,7 +475,7 @@ export const INITIAL_CORE_TYPES: BBType[] = [
         source: 'System',
         fieldBaseType: false, // Not directly usable as field, used via "Based On: Struct"
         settingDefinitions: [
-            getTypeKindSetting('0'),
+            getTypeKindSetting(),
             { id: 'Struct.Fields', name: 'Fields', typeId: 'List', subtypeId: 'BBField', mustOverride: true, noDelete: true, mandatory: true },
             { id: 'Struct.FieldGroups', name: 'Field Groups', typeId: 'List', subtypeId: 'IDString' },
             { id: 'Type.Editors', name: 'Editors', typeId: 'List', subtypeId: 'BBEditor', mustOverride: true, noDelete: true }
@@ -539,7 +551,7 @@ export const INITIAL_CORE_TYPES: BBType[] = [
         source: 'System',
         fieldBaseType: false, // Not directly usable as field, used via "Based On: Union"
         settingDefinitions: [
-            getTypeKindSetting('0'),
+            getTypeKindSetting(),
             { id: 'Type.Editors', name: 'Editors', typeId: 'List', subtypeId: 'BBEditor', mustOverride: true, noDelete: true }
         ],
         fields: [],
@@ -581,7 +593,7 @@ export const INITIAL_CORE_TYPES: BBType[] = [
             { id: 1, text: 'OpenWebPage' }
         ],
         settingDefinitions: [
-            getTypeKindSetting('0'),
+            getTypeKindSetting(),
             { id: 'Type.Editors', name: 'Editors', typeId: 'List', subtypeId: 'BBEditor', mustOverride: true, noDelete: true }
         ],
         editors: [{
@@ -603,7 +615,7 @@ export const INITIAL_CORE_TYPES: BBType[] = [
         source: 'System',
         fieldBaseType: true,
         settingDefinitions: [
-            getTypeKindSetting('0'),
+            getTypeKindSetting(),
             { id: 'ButtonText', name: 'Button Text', typeId: 'String' },
             { id: 'ButtonAction', name: 'Button Action', typeId: 'ButtonAction' },
             { id: 'ButtonParam', name: 'Button Parameter', typeId: 'String' },
@@ -637,7 +649,7 @@ export const INITIAL_CORE_TYPES: BBType[] = [
             { name: 'Text', typeId: 'String' }
         ],
         settingDefinitions: [
-            getTypeKindSetting('0'),
+            getTypeKindSetting(),
             { id: 'Struct.Fields', name: 'Fields', typeId: 'Custom', mustOverride: true, noDelete: true, mandatory: true },
             { id: 'Type.Editors', name: 'Editors', typeId: 'List', subtypeId: 'BBEditor', mustOverride: true, noDelete: true }
         ],
@@ -672,7 +684,7 @@ export const INITIAL_CORE_TYPES: BBType[] = [
             { name: 'description', typeId: 'String' }
         ],
         settingDefinitions: [
-            getTypeKindSetting('0'),
+            getTypeKindSetting(),
             { id: 'Type.Editors', name: 'Editors', typeId: 'List', subtypeId: 'BBEditor', mustOverride: true, noDelete: true }
         ],
         settings: {
@@ -715,7 +727,7 @@ export const INITIAL_CORE_TYPES: BBType[] = [
             { name: 'type', typeId: 'String' } // Useful to see System vs Custom
         ],
         settingDefinitions: [
-            getTypeKindSetting('0'),
+            getTypeKindSetting(),
             { id: 'Type.Editor', name: 'Default Editor', typeId: 'TypeEditor', subtypeId: 'BBEditor', description: 'Select which editor to use for BBEditor fields' },
             { id: 'Type.Editors', name: 'Editors', typeId: 'List', subtypeId: 'BBEditor', mustOverride: true, noDelete: true }
         ],
@@ -756,7 +768,7 @@ export const INITIAL_CORE_TYPES: BBType[] = [
 
         // Type Settings control which types appear in the list
         settingDefinitions: [
-            getTypeKindSetting('0'),
+            getTypeKindSetting(),
             { id: 'Type.Editors', name: 'Editors', typeId: 'List', subtypeId: 'BBEditor', mustOverride: true, noDelete: true },
             getTypeEditorSetting('BBType'),
             { id: 'BBType.SystemSource', name: 'System Types', typeId: 'Boolean' },
@@ -792,7 +804,7 @@ export const INITIAL_CORE_TYPES: BBType[] = [
 
         // Type Setting specifies which type's editors to show
         settingDefinitions: [
-            getTypeKindSetting('0'),
+            getTypeKindSetting(),
             { id: 'TypeEditor.Type', name: 'Type', typeId: 'BBType' },
             { id: 'Type.Editors', name: 'Editors', typeId: 'List', subtypeId: 'BBEditor', mustOverride: true, noDelete: true }
         ],
@@ -844,7 +856,7 @@ export const INITIAL_CORE_TYPES: BBType[] = [
                 'Editor.StdFontSize': 'published'
             },
             settingDefinitions: [
-                getTypeKindSetting('1'),
+                getTypeKindSetting(),
                 getTypeEditorSetting('Struct'),
                 { id: 'Struct.VertEdit.PromptPosition', name: 'Prompt Position', typeId: 'Struct.VertEdit.PromptPosition', description: 'Position of field labels' },
                 { id: 'Struct.VertEdit.PromptMinSpace', name: 'Prompt Min Space', typeId: 'Number', description: 'Minimum width for prompt area (pixels)' },
@@ -869,7 +881,7 @@ export const INITIAL_CORE_TYPES: BBType[] = [
             'List.Ordered': 'published'
         },
         settingDefinitions: [
-            getTypeKindSetting('1'),
+            getTypeKindSetting(),
             { id: 'List.Ordered', name: 'Ordered', typeId: 'Boolean', description: 'If true, the list order is important' }
         ],
         editors: [{
