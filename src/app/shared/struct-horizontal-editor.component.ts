@@ -120,19 +120,15 @@ export class StructHorizontalEditorComponent implements IEditorComponent<any>, O
         this.buttons = this.settings['Struct.HorzEdit.Buttons'] || [];
 
         // Visible Fields (ShowGroup logic)
-        const allFields = this.bbType?.fields || [];
-        const groupName = this.settings['Struct.HorzEdit.ShowGroup'];
+        // Get fields from settings (modern) or bbType.fields (legacy)
+        const allFields = this.settings['Struct.Fields'] || this.bbType?.fields || [];
+        const groupNumber = this.settings['Struct.HorzEdit.ShowGroup'];
 
-        if (groupName) {
-            this.visibleFields = allFields.filter(f => {
-                const fGroup = f.settings?.['Field.Group'] || f.settings?.['Group'];
-                return fGroup === groupName;
-            });
-            // Fallback if nothing matches?
-            if (this.visibleFields.length === 0 && allFields.length > 0) {
-                // Optional: keep empty to respect filter
-            }
+        if (groupNumber !== undefined && groupNumber !== null && groupNumber !== 0) {
+            // Filter by group number - match against the Group property on each field
+            this.visibleFields = allFields.filter((f: any) => f.Group === groupNumber);
         } else {
+            // Show all fields if no group filter
             this.visibleFields = allFields;
         }
     }
