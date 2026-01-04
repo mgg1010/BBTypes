@@ -223,8 +223,9 @@ export class DynamicFieldComponent implements OnChanges {
         }
 
         // 2. Resolve settings for this level
-        let localSettings = this.settings;
-        localSettings = this.settingsService.mergeSettings(this.settings, activeEditor.overrides, this.fieldName);
+        // Start with type's base settings (e.g. Struct.Fields for BBField)
+        let localSettings = { ...currentType.settings, ...this.settings };
+        localSettings = this.settingsService.mergeSettings(localSettings, activeEditor.overrides, this.fieldName);
 
         // 2b. Apply runtime overrides (for testing)
         if (this.runtimeOverrides?.length) {
