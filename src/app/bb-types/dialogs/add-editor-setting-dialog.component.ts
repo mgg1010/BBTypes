@@ -69,8 +69,8 @@ import { DynamicFieldComponent } from '../../shared/dynamic-field.component';
                              Field:
                              <select [ngModel]="selectedField" (ngModelChange)="onFieldChange($event)">
                                  <option value="*">All Fields</option>
-                                 @for (f of currentType?.fields; track f.FieldID) {
-                                     <option [value]="f.FieldID">{{ f.Prompt || f.FieldID }}</option>
+                                 @for (f of currentType?.fields; track f.name) {
+                                     <option [value]="f.name">{{ f.name }}</option>
                                  }
                              </select>
                          </label>
@@ -303,7 +303,7 @@ export class AddEditorSettingDialogComponent implements OnInit {
 
     get availableFieldTypes(): string[] {
         if (!this.currentType?.fields) return [];
-        const types = new Set(this.currentType.fields.map(f => f.TypeID).filter(t => t !== undefined) as string[]);
+        const types = new Set(this.currentType.fields.map(f => f.typeId));
         return Array.from(types).sort();
     }
 
@@ -374,9 +374,9 @@ export class AddEditorSettingDialogComponent implements OnInit {
             // Reset Editor too?
             this.selectedEditor = '*';
         } else {
-            const field = this.currentType?.fields?.find(f => f.FieldID === newField);
+            const field = this.currentType?.fields?.find(f => f.name === newField);
             if (field) {
-                this.selectedType = field.TypeID;
+                this.selectedType = field.typeId;
                 this.typeDisabled = true;
                 this.selectedEditor = '*';
             }

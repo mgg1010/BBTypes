@@ -30,8 +30,8 @@ import { DynamicFieldComponent } from '../../shared/dynamic-field.component';
                 <select [(ngModel)]="ov.fieldName" (ngModelChange)="onTypeFieldChanged(ov)" class="field-select" [disabled]="isReadOnly">
                   <option value="_THIS_TYPE_">This Type</option>
                   <option value="*">* (All Fields)</option>
-                  @for (field of newType.fields || []; track field.FieldID) {
-                    <option [value]="field.FieldID">{{ field.Prompt || field.FieldID }}</option>
+                  @for (field of newType.fields || []; track field.name) {
+                    <option [value]="field.name">{{ field.name }}</option>
                   }
                 </select>
               </td>
@@ -195,7 +195,7 @@ export class TypeOverridesTabComponent {
 
       // If deleting a specific field override, clear it from the field settings too
       if (ov.fieldName !== '*' && ov.fieldName !== '_THIS_TYPE_' && ov.settingId) {
-        const field = this.newType.fields?.find(f => f.FieldID === ov.fieldName);
+        const field = this.newType.fields?.find(f => f.name === ov.fieldName);
         if (field && field.settings && field.settings[ov.settingId] !== undefined) {
           delete field.settings[ov.settingId];
         }
@@ -212,9 +212,9 @@ export class TypeOverridesTabComponent {
       ov.settingTypeId = '_THIS_TYPE_';
     } else {
       // Auto-set type based on field's type
-      const field = this.newType.fields?.find(f => f.FieldID === ov.fieldName);
+      const field = this.newType.fields?.find(f => f.name === ov.fieldName);
       if (field) {
-        ov.settingTypeId = field.TypeID;
+        ov.settingTypeId = field.typeId;
       }
     }
     // Clear setting and value when field changes
@@ -231,7 +231,7 @@ export class TypeOverridesTabComponent {
 
     // Sync to field settings if applicable (and not This Type)
     if (ov.fieldName !== '*' && ov.fieldName !== '_THIS_TYPE_' && !ov.isExpression) {
-      const field = this.newType.fields?.find(f => f.FieldID === ov.fieldName);
+      const field = this.newType.fields?.find(f => f.name === ov.fieldName);
       if (field) {
         if (!field.settings) field.settings = {};
         field.settings[ov.settingId] = newValue;
@@ -252,7 +252,7 @@ export class TypeOverridesTabComponent {
     if (fieldName === '*') {
       // All Fields - show distinct types from fields + Any
       const distinctTypes = new Set<string>();
-      (this.newType.fields || []).forEach(f => f.TypeID && distinctTypes.add(f.TypeID));
+      (this.newType.fields || []).forEach(f => distinctTypes.add(f.typeId));
 
       const options = [];
       options.push({ id: '_ANY_', name: '* (Any)' });
@@ -270,11 +270,11 @@ export class TypeOverridesTabComponent {
     }
 
     // Specific Field
-    const field = this.newType.fields?.find(f => f.FieldID === fieldName);
+    const field = this.newType.fields?.find(f => f.name === fieldName);
     if (!field) return [];
 
-    const type = this.allTypes.find(t => t.id === field.TypeID);
-    return [{ id: field.TypeID, name: type ? type.name : field.TypeID }];
+    const type = this.allTypes.find(t => t.id === field.typeId);
+    return [{ id: field.typeId, name: type ? type.name : field.typeId }];
   }
 
   getFilteredTypeSettings(typeId: string): BBSettingDefinition[] {
@@ -294,7 +294,7 @@ export class TypeOverridesTabComponent {
     } else if (typeId === '_ANY_') {
       // Merge all settings from all types used in fields
       const distinctTypes = new Set<string>();
-      (this.newType.fields || []).forEach(f => f.TypeID && distinctTypes.add(f.TypeID));
+      (this.newType.fields || []).forEach(f => distinctTypes.add(f.typeId));
 
       let allSettings: BBSettingDefinition[] = [];
       const seenIds = new Set<string>();

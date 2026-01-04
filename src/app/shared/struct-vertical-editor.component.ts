@@ -24,26 +24,26 @@ import { DynamicFieldComponent } from './dynamic-field.component';
          <div class="union-selector">
             <select [(ngModel)]="activeUnionField" (change)="onUnionChange()">
                 <option [ngValue]="null">Select Type...</option>
-                @for (field of fields; track $index) {
-                    <option [ngValue]="field">{{ field.Prompt || field.FieldID }}</option>
+                @for (field of fields; track field.name) {
+                    <option [ngValue]="field">{{ field.name }}</option>
                 }
             </select>
          </div>
          
          @if (activeUnionField) {
             <div class="field-group">
-                <label #fieldLabel class="field-label">{{ activeUnionField.Prompt || activeUnionField.FieldID }}:</label>
+                <label #fieldLabel class="field-label">{{ activeUnionField.name }}:</label>
                 <div class="field-editor">
                     <app-dynamic-field
-                        [typeId]="activeUnionField.TypeID"
+                        [typeId]="activeUnionField.typeId"
                         [appConfig]="appConfig"
-                        [value]="value[activeUnionField.FieldID]"
-                        (valueChange)="onFieldValueChange(activeUnionField.FieldID, $event)"
+                        [value]="value[activeUnionField.name]"
+                        (valueChange)="onFieldValueChange(activeUnionField.name, $event)"
                         [mode]="mode"
                         [size]="size"
                         [isDisabled]="isDisabled"
                         [settings]="settings"
-                        [fieldName]="activeUnionField.FieldID">
+                        [fieldName]="activeUnionField.name">
                     </app-dynamic-field>
                 </div>
             </div>
@@ -53,20 +53,20 @@ import { DynamicFieldComponent } from './dynamic-field.component';
          @if (fields.length === 0) {
             <div class="empty-struct-message">No fields defined for this struct.</div>
          }
-         @for (field of fields; track $index) {
+         @for (field of fields; track field.name) {
             <div class="field-group">
-                <label #fieldLabel class="field-label">{{ field.Prompt || field.FieldID }}:</label>
+                <label #fieldLabel class="field-label">{{ field.name }}:</label>
                 <div class="field-editor">
                      <app-dynamic-field
-                        [typeId]="field.TypeID"
+                        [typeId]="field.typeId"
                         [appConfig]="appConfig"
-                        [value]="value[field.FieldID]"
-                        (valueChange)="onFieldValueChange(field.FieldID, $event)"
+                        [value]="value[field.name]"
+                        (valueChange)="onFieldValueChange(field.name, $event)"
                         [mode]="mode"
                         [size]="size"
                         [isDisabled]="isDisabled"
                         [settings]="settings"
-                        [fieldName]="field.FieldID">
+                        [fieldName]="field.name">
                     </app-dynamic-field>
                 </div>
             </div>
@@ -229,7 +229,7 @@ export class StructVerticalEditorComponent implements IEditorComponent<any>, OnI
         } else {
             // Fallback: estimate based on text length (12px per character average)
             const allFields = this.fields;
-            const maxChars = Math.max(...allFields.map((f: any) => (f.Prompt || f.FieldID || '').length), 0);
+            const maxChars = Math.max(...allFields.map((f: any) => f.name.length), 0);
             maxPromptSize = maxChars * 12;
         }
 

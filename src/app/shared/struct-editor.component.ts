@@ -18,7 +18,7 @@ import { DynamicFieldComponent } from './dynamic-field.component';
          <div class="union-selector">
             <select [(ngModel)]="activeUnionField" (change)="onUnionChange()">
                 <option [ngValue]="null">Select Type...</option>
-                @for (field of bbType?.fields || []; track $index) {
+                @for (field of bbType?.fields || []; track field.name) {
                     <option [ngValue]="field">{{ field.name }}</option>
                 }
             </select>
@@ -43,7 +43,7 @@ import { DynamicFieldComponent } from './dynamic-field.component';
          @if ((bbType?.fields?.length || 0) === 0) {
             <div class="empty-struct-message">No fields defined for this struct.</div>
          }
-         @for (field of bbType?.fields || []; track $index) {
+         @for (field of bbType?.fields || []; track field.name) {
             <div class="field-wrapper">
                 <label class="field-label">{{ field.name }}:</label>
                 <div class="field-editor">

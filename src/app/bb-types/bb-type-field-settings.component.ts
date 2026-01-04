@@ -14,7 +14,7 @@ import { DynamicFieldComponent } from '../shared/dynamic-field.component';
         @if (selectedField) {
             <div class="sub-tabs">
                 @if (hasTypeSettings(selectedField!)) {
-                    <button [class.active]="activeFieldSettingsTab === 'type'" (click)="activeFieldSettingsTab = 'type'">{{ getSystemTypeName(selectedField!.TypeID) }} Type Settings</button>
+                    <button [class.active]="activeFieldSettingsTab === 'type'" (click)="activeFieldSettingsTab = 'type'">{{ getSystemTypeName(selectedField!.typeId) }} Type Settings</button>
                 }
                 <button [class.active]="activeFieldSettingsTab === 'global'" (click)="activeFieldSettingsTab = 'global'">Global Editor Settings</button>
                 <button [class.active]="activeFieldSettingsTab === 'editor'" (click)="activeFieldSettingsTab = 'editor'">Editor Settings</button>
@@ -37,7 +37,7 @@ import { DynamicFieldComponent } from '../shared/dynamic-field.component';
                             </div>
                         }
                         @if (getTypeSpecificFieldSettings(selectedField!).length === 0) {
-                            <div class="info-box">No specific settings available for {{ getSystemTypeName(selectedField!.TypeID) }}.</div>
+                            <div class="info-box">No specific settings available for {{ getSystemTypeName(selectedField!.typeId) }}.</div>
                         }
                     </div>
                 }
@@ -71,7 +71,7 @@ import { DynamicFieldComponent } from '../shared/dynamic-field.component';
                                         <input type="radio" name="editor_mode"
                                             [checked]="!isUsingCustomEditor(selectedField!)" 
                                             (click)="setUseCustomEditor(selectedField!, false)"> 
-                                        Default ({{ getDefaultEditorName(selectedField!.TypeID) }})
+                                        Default ({{ getDefaultEditorName(selectedField!.typeId) }})
                                     </label>
                                     <label>
                                         <input type="radio" name="editor_mode"
@@ -89,7 +89,7 @@ import { DynamicFieldComponent } from '../shared/dynamic-field.component';
                                     [disabled]="!isUsingCustomEditor(selectedField!)"
                                     [ngModel]="getFieldEditorId(selectedField!)" 
                                     (ngModelChange)="setFieldEditorId(selectedField!, $event)">
-                                    @for (editor of getCompatibleEditors(selectedField!.TypeID); track editor.id) {
+                                    @for (editor of getCompatibleEditors(selectedField!.typeId); track editor.id) {
                                         <option [value]="editor.id">{{ editor.name }}</option>
                                     }
                                 </select>
@@ -101,8 +101,8 @@ import { DynamicFieldComponent } from '../shared/dynamic-field.component';
                             <div class="field-setting-row">
                                 <label>View Settings for:</label>
                                 <select [(ngModel)]="viewSettingsEditorId">
-                                    <option value="default">Default ({{ getDefaultEditorName(selectedField!.TypeID) }})</option>
-                                    @for (editor of getCompatibleEditors(selectedField!.TypeID); track editor.id) {
+                                    <option value="default">Default ({{ getDefaultEditorName(selectedField!.typeId) }})</option>
+                                    @for (editor of getCompatibleEditors(selectedField!.typeId); track editor.id) {
                                         @if (editor.id !== 'default') {
                                             <option [value]="editor.id">{{ editor.name }}</option>
                                         }
@@ -111,7 +111,7 @@ import { DynamicFieldComponent } from '../shared/dynamic-field.component';
                             </div>
 
                             <h5 style="margin: 15px 0 10px 0; color: #666; font-size: 12px; border-bottom: 1px solid #eee; padding-bottom: 5px; display: none;"> <!-- Hidden header -->
-                                Configuration for {{ getEditorName(selectedField!.TypeID, viewSettingsEditorId) }}
+                                Configuration for {{ getEditorName(selectedField!.typeId, viewSettingsEditorId) }}
                             </h5>
                             
                             <!-- 4. Specific Settings for viewed editor -->
@@ -284,7 +284,7 @@ export class BBTypeFieldSettingsComponent implements OnChanges {
         if (use) {
             if (!Object.prototype.hasOwnProperty.call(field.settings, 'UI.Editor')) {
                 field.settings['UI.Editor'] = '';
-                const editors = this.getCompatibleEditors(field.TypeID);
+                const editors = this.getCompatibleEditors(field.typeId);
                 field.settings['UI.Editor'] = editors.length > 0 ? editors[0].id : '';
             }
         } else {
@@ -293,8 +293,8 @@ export class BBTypeFieldSettingsComponent implements OnChanges {
     }
 
     getTypeSpecificFieldSettings(field: BBField): BBSettingDefinition[] {
-        if (!field || !field.TypeID) return [];
-        const type = this.allTypes.find(t => t.id === field.TypeID);
+        if (!field || !field.typeId) return [];
+        const type = this.allTypes.find(t => t.id === field.typeId);
         if (!type) return [];
         const allSettings = this.bbTypeService.getAvailableSettings(type) || [];
         return allSettings.filter(s => !s.id.startsWith('UI.') && !s.id.startsWith('Editor.') && s.id !== 'Editor' && s.id !== 'editor' && s.name !== 'Editor');
@@ -315,7 +315,7 @@ export class BBTypeFieldSettingsComponent implements OnChanges {
     }
 
     getSettingsForEditor(field: BBField, editorId: string): BBSettingDefinition[] {
-        const editor = this.getCompatibleEditors(field.TypeID).find(e => e.id === editorId);
+        const editor = this.getCompatibleEditors(field.typeId).find(e => e.id === editorId);
         return editor && editor.settingDefinitions ? editor.settingDefinitions : [];
     }
 }

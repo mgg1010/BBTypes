@@ -700,9 +700,9 @@ export const INITIAL_CORE_TYPES: BBType[] = [
             { id: 'Type.Editors', name: 'Editors', typeId: 'List', subtypeId: 'BBEditor', mustOverride: true, noDelete: true }
         ],
         fields: [
-            { Prompt: 'ButtonText', TypeID: 'String', FieldID: 'ButtonText', Required: false, Group: 0 },
-            { Prompt: 'ButtonAction', TypeID: 'ButtonAction', FieldID: 'ButtonAction', Required: false, Group: 0 },
-            { Prompt: 'ButtonParam', TypeID: 'String', FieldID: 'ButtonParam', Required: false, Group: 0 }
+            { name: 'ButtonText', typeId: 'String' },
+            { name: 'ButtonAction', typeId: 'ButtonAction' },
+            { name: 'ButtonParam', typeId: 'String' }
         ],
         editors: [{
             id: 'default',
@@ -723,8 +723,8 @@ export const INITIAL_CORE_TYPES: BBType[] = [
         source: 'System',
         fieldBaseType: true,
         fields: [
-            { Prompt: 'Id', TypeID: 'Number', FieldID: 'Id', Required: false, Group: 0 },
-            { Prompt: 'Text', TypeID: 'String', FieldID: 'Text', Required: false, Group: 0 }
+            { name: 'Id', typeId: 'Number' },
+            { name: 'Text', typeId: 'String' }
         ],
         settingDefinitions: [
             getTypeKindSetting(),
@@ -1013,8 +1013,8 @@ export const INITIAL_CORE_TYPES: BBType[] = [
         fieldBaseType: false,
         sourceType: 'Struct',
         fields: [
-            { Prompt: 'Regexp', TypeID: 'String', FieldID: 'Regexp', Required: false, Group: 0 },
-            { Prompt: 'ErrMsg', TypeID: 'String', FieldID: 'ErrMsg', Required: false, Group: 0 }
+            { name: 'Regexp', typeId: 'String' },
+            { name: 'ErrMsg', typeId: 'String' }
         ],
         editors: [{ id: 'default', name: 'Default', type: 'System', baseEditorId: 'struct-vertical', publishedSettings: {}, settingDefinitions: [], overrides: [] }]
     },

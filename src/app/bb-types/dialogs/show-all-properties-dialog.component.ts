@@ -26,7 +26,7 @@ interface SettingSection {
     <div class="modal-overlay">
       <div class="modal-content">
         <div class="modal-header">
-          <h3>Type Settings: {{ type.name }}</h3>
+          <h3>All Settings: {{ type.name }}</h3>
           <button class="close-btn" (click)="cancel.emit()">✕</button>
         </div>
         
