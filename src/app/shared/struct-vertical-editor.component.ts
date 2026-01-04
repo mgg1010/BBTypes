@@ -41,6 +41,7 @@ import { DynamicFieldComponent } from './dynamic-field.component';
                         (valueChange)="onFieldValueChange(activeUnionField.name, $event)"
                         [mode]="mode"
                         [size]="size"
+                        [isDisabled]="isDisabled"
                         [settings]="settings"
                         [fieldName]="activeUnionField.name">
                     </app-dynamic-field>
@@ -63,6 +64,7 @@ import { DynamicFieldComponent } from './dynamic-field.component';
                         (valueChange)="onFieldValueChange(field.name, $event)"
                         [mode]="mode"
                         [size]="size"
+                        [isDisabled]="isDisabled"
                         [settings]="settings"
                         [fieldName]="field.name">
                     </app-dynamic-field>
@@ -157,6 +159,7 @@ export class StructVerticalEditorComponent implements IEditorComponent<any>, OnI
 
     @Input() mode: EditorMode = 'edit';
     @Input() size: EditorSize = 'medium';
+    @Input() isDisabled: boolean = false;
     @Input() bbType?: BBType = undefined;
     @Input() appConfig: AppConfig | null = null;
     @Input() settings: Record<string, any> = {};
