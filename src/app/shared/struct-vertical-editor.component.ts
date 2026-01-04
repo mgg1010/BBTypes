@@ -50,10 +50,10 @@ import { DynamicFieldComponent } from './dynamic-field.component';
          }
       } @else {
          <!-- Struct Logic: Show all fields vertically -->
-         @if ((bbType?.fields?.length || 0) === 0) {
+         @if (fields.length === 0) {
             <div class="empty-struct-message">No fields defined for this struct.</div>
          }
-         @for (field of bbType?.fields || []; track field.name) {
+         @for (field of fields; track field.name) {
             <div class="field-group">
                 <label #fieldLabel class="field-label">{{ field.name }}:</label>
                 <div class="field-editor">
@@ -171,6 +171,11 @@ export class StructVerticalEditorComponent implements IEditorComponent<any>, OnI
     promptPosition: 'above' | 'left' | 'inside' = 'left';
     promptAlign: 'left' | 'right' = 'right';
     promptGapPx: number = 120; // Default
+
+    // Get fields from settings (modern) or bbType.fields (legacy)
+    get fields(): BBField[] {
+        return this.settings['Struct.Fields'] || this.bbType?.fields || [];
+    }
 
     constructor(private bbTypeService: BBTypeService) { }
 
