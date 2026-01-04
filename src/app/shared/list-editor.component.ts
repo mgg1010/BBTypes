@@ -140,7 +140,7 @@ import { BBTypeService } from '../services/bb-type.service';
     .list-item {
       display: flex;
       align-items: center;
-      padding: 8px;
+      padding: 4px 8px;
       border-bottom: 1px solid #eee;
       background: #fff;
       transition: background-color 0.2s;
