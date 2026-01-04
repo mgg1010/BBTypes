@@ -32,6 +32,14 @@ export interface BBField {
     name: string;
     typeId: string; // Reference to another BBType by name or ID
     settings?: Record<string, any>; // Per-field configuration (e.g. constraints, default editor)
+
+    // TEMPORARY: New format properties during migration - TODO: Make required and remove old ones
+    Prompt?: string;
+    FieldID?: string;
+    TypeID?: string;
+    Required?: boolean;
+    Group?: number;
+    Description?: string;
 }
 
 export interface BBSettingOverride {

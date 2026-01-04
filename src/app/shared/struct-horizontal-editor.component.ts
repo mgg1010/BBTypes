@@ -19,18 +19,18 @@ import { GenericEditorDialogComponent } from './generic-editor-dialog.component'
                  [style.min-width.px]="minWidth" 
                  [style.max-width.px]="maxWidth">
                 @if (showHeaders) {
-                    <div class="field-label" [title]="field.name">{{ field.name }}</div>
+                    <div class="field-label" [title]="field.Prompt || field.name">{{ field.Prompt || field.name }}</div>
                 }
                 <div class="field-editor">
                     <app-dynamic-field
-                        [typeId]="field.typeId"
+                        [typeId]="getFieldType(field)"
                         [appConfig]="appConfig"
-                        [value]="value[field.name]"
-                        (valueChange)="onFieldValueChange(field.name, $event)"
+                        [value]="value[getFieldKey(field)]"
+                        (valueChange)="onFieldValueChange(getFieldKey(field), $event)"
                         [mode]="mode"
                         [size]="size"
                         [settings]="fieldSettings(field)"
-                        [fieldName]="field.name">
+                        [fieldName]="getFieldKey(field)">
                     </app-dynamic-field>
                 </div>
             </div>
@@ -135,6 +135,16 @@ export class StructHorizontalEditorComponent implements IEditorComponent<any>, O
 
     fieldSettings(field: BBField) {
         return field.settings || {};
+    }
+
+    // TEMPORARY: Support both old (name/typeId) and new (FieldID/TypeID) format during migration
+    // TODO: Remove after all types migrated to new format
+    getFieldKey(field: any): string {
+        return field.FieldID || field.name || '';
+    }
+
+    getFieldType(field: any): string {
+        return field.TypeID || field.typeId || '';
     }
 
     onFieldValueChange(fieldName: string, newValue: any) {

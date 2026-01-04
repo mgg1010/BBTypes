@@ -55,18 +55,18 @@ import { DynamicFieldComponent } from './dynamic-field.component';
          }
          @for (field of fields; track field.name) {
             <div class="field-group">
-                <label #fieldLabel class="field-label">{{ field.name }}:</label>
+                <label #fieldLabel class="field-label">{{ field.Prompt || field.name }}:</label>
                 <div class="field-editor">
                      <app-dynamic-field
-                        [typeId]="field.typeId"
+                        [typeId]="getFieldType(field)"
                         [appConfig]="appConfig"
-                        [value]="value[field.name]"
-                        (valueChange)="onFieldValueChange(field.name, $event)"
+                        [value]="value[getFieldKey(field)]"
+                        (valueChange)="onFieldValueChange(getFieldKey(field), $event)"
                         [mode]="mode"
                         [size]="size"
                         [isDisabled]="isDisabled"
                         [settings]="settings"
-                        [fieldName]="field.name">
+                        [fieldName]="getFieldKey(field)">
                     </app-dynamic-field>
                 </div>
             </div>
@@ -175,6 +175,16 @@ export class StructVerticalEditorComponent implements IEditorComponent<any>, OnI
     // Get fields from settings (modern) or bbType.fields (legacy)
     get fields(): BBField[] {
         return this.settings['Struct.Fields'] || this.bbType?.fields || [];
+    }
+
+    // TEMPORARY: Support both old (name/typeId) and new (FieldID/TypeID) format during migration
+    // TODO: Remove after all types migrated to new format
+    getFieldKey(field: any): string {
+        return field.FieldID || field.name || '';
+    }
+
+    getFieldType(field: any): string {
+        return field.TypeID || field.typeId || '';
     }
 
     constructor(private bbTypeService: BBTypeService) { }
