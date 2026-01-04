@@ -92,7 +92,7 @@ import { BBTypeService } from '../services/bb-type.service';
         }
         @if (!value || value.length === 0) {
             <div class="empty-list-message">
-                No items in list. Click + to add one.
+                No items in list{{ isDisabled ? '.' : '. Click + to add one.' }}
             </div>
         }
       </div>
