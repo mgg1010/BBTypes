@@ -716,6 +716,7 @@ export const INITIAL_CORE_TYPES: BBType[] = [
                 { name: 'TypeID', typeId: 'String' },
                 { name: 'FieldID', typeId: 'String' },
                 { name: 'Required', typeId: 'Boolean' },
+                { name: 'Group', typeId: 'Number' },
                 { name: 'Description', typeId: 'String' }
             ]
         },
