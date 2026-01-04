@@ -93,11 +93,11 @@ export const INITIAL_CORE_TYPES: BBType[] = [
         minLenMsg: 'Must be %d characters or more',
         settingDefinitions: [
             getTypeKindSetting(),
+            { id: 'Type.Editors', name: 'Editors', typeId: 'List', subtypeId: 'BBEditor', mustOverride: true, noDelete: true },
             { id: 'String.MinLen', name: 'Min Length', typeId: 'Number' },
             { id: 'String.MinLenMsg', name: 'Min Length Message', typeId: 'String' },
             { id: 'String.MaxLen', name: 'Max Length', typeId: 'Number' },
-            { id: 'String.MaxLenMsg', name: 'Max Length Message', typeId: 'String' },
-            { id: 'Type.Editors', name: 'Editors', typeId: 'List', subtypeId: 'BBEditor', mustOverride: true, noDelete: true }
+            { id: 'String.MaxLenMsg', name: 'Max Length Message', typeId: 'String' }
         ],
         settings: {
             'Type.Kind': '0',

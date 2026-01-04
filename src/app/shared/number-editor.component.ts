@@ -22,6 +22,7 @@ import { ExpressionEditorComponent } from './expression-editor.component';
           [ngModel]="value" 
           (ngModelChange)="onValueChange($event)"
           (keydown)="onKeyDown($event)"
+          [disabled]="isDisabled"
           class="editor-input"
           [class.invalid]="error"
         />
@@ -77,6 +78,13 @@ import { ExpressionEditorComponent } from './expression-editor.component';
         background-color: #ffebee;
     }
 
+    .editor-input:disabled {
+        color: #999;
+        border-color: #ddd;
+        background-color: #f5f5f5;
+        cursor: not-allowed;
+    }
+
     .error-msg {
         color: #f44336;
         font-size: var(--font-size-sm);
@@ -115,6 +123,7 @@ export class NumberEditorComponent implements IEditorComponent<number>, OnInit {
   @Input() value: number = 0;
   @Input() mode: EditorMode = 'read';
   @Input() size: EditorSize = 'medium';
+  @Input() isDisabled: boolean = false;
   @Input() settings: Record<string, any> = {};
   @Output() valueChange = new EventEmitter<number>();
   @Output() modeChange = new EventEmitter<EditorMode>();
