@@ -133,12 +133,14 @@ import { calculateControlWidth } from './layout-helpers';
                                 <div class="setting-top-row">
                                     <div class="setting-label-area">
                                         <span class="setting-label">{{ item.label }}:</span>
-                                        @if (item.settingDef?.readOnly) {
-                                            <span class="setting-flag" title="Read-only setting">RO</span>
-                                        }
-                                        @if (item.settingDef?.inputOutput === 1) {
-                                            <span class="setting-flag output-flag" title="Output (calculated) setting">Output</span>
-                                        }
+                                        <div style="display: flex; gap: 4px; margin-top: 2px;">
+                                            @if (item.settingDef?.readOnly) {
+                                                <span class="setting-flag small" title="Read-only setting">RO</span>
+                                            }
+                                            @if (item.settingDef?.inputOutput === 1) {
+                                                <span class="setting-flag small output-flag" title="Output (calculated) setting">Out</span>
+                                            }
+                                        </div>
                                     </div>
 
                                     <!-- Inline Editor Area (for non-complex) -->
@@ -196,7 +198,10 @@ import { calculateControlWidth } from './layout-helpers';
                                                 [mode]="'edit'"
                                                 [isDisabled]="isReadOnly"
                                                 [size]="'medium'"
-                                                [runtimeOverrides]="item.settingDef?.subtypeId === 'BBField' ? [{ fieldName: '*', settingId: 'Type.Editor', value: 'HorzEdit' }] : []"
+                                                [runtimeOverrides]="item.settingDef?.subtypeId === 'BBField' ? [
+                                                    { fieldName: '*', settingId: 'Type.Editor', value: 'HorzEdit' },
+                                                    { fieldName: '*', settingId: 'List.ShowHeaders', value: true }
+                                                ] : []"
                                                 (valueChange)="updateSettingListItem(item.id, $event)">
                                             </app-dynamic-field>
                                         } @else if (item.component === 'groups') {

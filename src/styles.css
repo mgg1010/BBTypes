@@ -216,7 +216,14 @@ small {
     font-weight: 600;
     vertical-align: middle;
 }
+
 .setting-flag.output-flag {
     background: #fff3e0;
     color: #f57c00;
+}
+
+.setting-flag.small {
+    font-size: 8px;
+    padding: 1px 4px;
+    margin-left: 0;
 }

@@ -71,7 +71,7 @@ import { BBTypeService } from '../services/bb-type.service';
                     [settings]="settings"
                     [fieldName]="'[' + $index + ']'"
                     [isDisabled]="isDisabled"
-                    [runtimeOverrides]="runtimeOverrides || []"
+                    [runtimeOverrides]="getItemRuntimeOverrides($index)"
                     (valueChange)="onItemChange($index, $event)">
                   </app-dynamic-field>
                } @else {
@@ -326,6 +326,20 @@ export class ListEditorComponent implements IEditorComponent<any[]>, OnInit {
   }
 
   constructor(private bbTypeService: BBTypeService) { }
+
+  getItemRuntimeOverrides(index: number): any[] {
+    const baseOverrides = this.runtimeOverrides || [];
+
+    // Add showHeaders for first item if list has ShowHeaders setting
+    if (index === 0 && this.settings['List.ShowHeaders']) {
+      return [
+        ...baseOverrides,
+        { fieldName: '*', settingId: 'Struct.HorzEdit.ShowHeaders', value: true }
+      ];
+    }
+
+    return baseOverrides;
+  }
 
   ngOnInit() {
     // Read List.ItemGap setting

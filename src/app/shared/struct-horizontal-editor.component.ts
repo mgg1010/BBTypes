@@ -17,29 +17,48 @@ import { GenericEditorDialogComponent } from './generic-editor-dialog.component'
          [style.gap.px]="gap"
          [style.--std-font]="stdFont"
          [style.--std-font-size]="stdFontSize">
-        @for (field of visibleFields; track $index) {
-            <div class="field-wrapper" 
-                 [style.flex-basis.px]="minWidth ? minWidth : 'auto'"
-                 [style.min-width.px]="minWidth" 
-                 [style.max-width.px]="maxWidth">
-                @if (showHeaders) {
-                    <div class="field-label" [title]="field.Prompt || field.name">{{ field.Prompt || field.name }}</div>
+        
+        <!-- Header Row -->
+        @if (showHeaders) {
+            <div class="header-row" [style.gap.px]="gap">
+                @for (field of visibleFields; track $index) {
+                    <div class="header-cell" 
+                         [style.flex-basis.px]="minWidth ? minWidth : 'auto'"
+                         [style.min-width.px]="minWidth" 
+                         [style.max-width.px]="maxWidth"
+                         [title]="field.Prompt || field.name">
+                        {{ field.Prompt || field.name }}
+                    </div>
                 }
-                <div class="field-editor">
-                    <app-dynamic-field
-                        [typeId]="getFieldType(field)"
-                        [appConfig]="appConfig"
-                        [value]="value[getFieldKey(field)]"
-                        (valueChange)="onFieldValueChange(getFieldKey(field), $event)"
-                        [mode]="'edit'"
-                        [size]="size"
-                        [isDisabled]="isDisabled"
-                        [settings]="settings"
-                        [fieldName]="getFieldKey(field)">
-                    </app-dynamic-field>
-                </div>
+                @if (buttons.length > 0) {
+                    <div class="header-spacer"></div>
+                }
             </div>
         }
+        
+        <!-- Data Row -->
+        <div class="data-row" [style.gap.px]="gap">
+            @for (field of visibleFields; track $index) {
+                <div class="field-wrapper" 
+                     [style.flex-basis.px]="minWidth ? minWidth : 'auto'"
+                     [style.min-width.px]="minWidth" 
+                     [style.max-width.px]="maxWidth">
+                    <div class="field-editor">
+                        <app-dynamic-field
+                            [typeId]="getFieldType(field)"
+                            [appConfig]="appConfig"
+                            [value]="value[getFieldKey(field)]"
+                            (valueChange)="onFieldValueChange(getFieldKey(field), $event)"
+                            [mode]="'edit'"
+                            [size]="size"
+                            [isDisabled]="isDisabled"
+                            [settings]="settings"
+                            [fieldName]="getFieldKey(field)">
+                        </app-dynamic-field>
+                    </div>
+                </div>
+            }
+        </div>
         
         @if (buttons.length > 0) {
             <div class="buttons-wrapper">
@@ -64,7 +83,25 @@ import { GenericEditorDialogComponent } from './generic-editor-dialog.component'
   `,
     styles: [`
     :host { display: block; width: 100%; }
-    .struct-horizontal-container { display: flex; flex-direction: row; align-items: flex-end; flex-wrap: wrap; }
+    .struct-horizontal-container { display: flex; flex-direction: column; width: 100%; }
+    
+    /* Header Row */
+    .header-row { display: flex; flex-direction: row; gap: 10px; margin-top: -3px; padding: 0 0 5px 0; }
+    .header-cell { 
+        flex: 1; 
+        font-weight: 600; 
+        font-size: 10px; 
+        color: #666; 
+        text-align: left;
+        overflow: hidden; 
+        white-space: nowrap; 
+        text-overflow: ellipsis;
+        padding: 0 4px;
+    }
+    .header-spacer { width: 80px; flex-shrink: 0; } /* Matches buttons-wrapper width */
+    
+    /* Data Row */
+    .data-row { display: flex; flex-direction: row; }
     .field-wrapper { display: flex; flex-direction: column; flex: 1; border: 1px solid #ddd; padding: 4px; border-radius: 3px; }
     .field-label { font-weight: 600; font-size: 11px; color: #555; margin-bottom: 4px; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
     .field-editor { width: 100%; }
