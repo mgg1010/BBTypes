@@ -17,12 +17,7 @@ export function getVertEditSettings(): BBSettingListItem[] {
         settingDef: {
             id: 'Struct.VertEdit.PromptPosition',
             name: 'Struct.VertEdit.PromptPosition',
-            typeId: 'enum',
-            values: [
-                { id: 0, text: 'Left' },
-                { id: 1, text: 'Above' },
-                { id: 2, text: 'Inside' }
-            ]
+            typeId: 'Struct.VertEdit.PromptPosition'
         }
     });
 
@@ -37,11 +32,7 @@ export function getVertEditSettings(): BBSettingListItem[] {
         settingDef: {
             id: 'Struct.VertEdit.PromptAlign',
             name: 'Struct.VertEdit.PromptAlign',
-            typeId: 'enum',
-            values: [
-                { id: 0, text: 'Left' },
-                { id: 1, text: 'Right' }
-            ]
+            typeId: 'Struct.VertEdit.PromptAlign'
         }
     });
 
@@ -53,7 +44,7 @@ export function getVertEditSettings(): BBSettingListItem[] {
         scope: 'root',
         readOnly: true,
         removable: false,
-        settingDef: { id: 'Struct.VertEdit.PromptMinSpace', name: 'Struct.VertEdit.PromptMinSpace', typeId: 'number' }
+        settingDef: { id: 'Struct.VertEdit.PromptMinSpace', name: 'Struct.VertEdit.PromptMinSpace', typeId: 'Number' }
     });
 
     list.push({
@@ -64,7 +55,7 @@ export function getVertEditSettings(): BBSettingListItem[] {
         scope: 'root',
         readOnly: true,
         removable: false,
-        settingDef: { id: 'Struct.VertEdit.PromptMaxSpace', name: 'Struct.VertEdit.PromptMaxSpace', typeId: 'number' }
+        settingDef: { id: 'Struct.VertEdit.PromptMaxSpace', name: 'Struct.VertEdit.PromptMaxSpace', typeId: 'Number' }
     });
 
     return list;
