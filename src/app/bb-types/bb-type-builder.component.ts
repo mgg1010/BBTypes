@@ -51,7 +51,7 @@ import { calculateControlWidth } from './layout-helpers';
             
              <!-- Custom Published Editors -->
              @for (ed of newType.editors; track ed.id) {
-                 @if (!ed.isHidden) {
+                 @if (!ed.isHidden && (!baseEditor || ed.id !== baseEditor.id)) {
                      <button [class.active]="activeTab === 'editor_' + ed.id" (click)="activeTab = 'editor_' + ed.id">{{ ed.name }}</button>
                  }
              }
