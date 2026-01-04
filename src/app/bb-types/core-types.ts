@@ -7,8 +7,8 @@ function getGlobalEditorSettings(): BBSettingDefinition[] {
         { id: 'Editor.Locale', name: 'Locale', typeId: 'String', description: 'Locale for this editor (e.g., en-US)' },
         { id: 'Editor.StdFont', name: 'Standard Font', typeId: 'Font', description: 'Font used for standard text' }, // typeId 'Font' matches the Font type
         { id: 'Editor.StdFontSize', name: 'Standard Font Size', typeId: 'Number', description: 'Font size (in pixels) for standard text' },
-        { id: 'Editor.ControlMinWidth', name: 'Control Min Width', typeId: 'Number', description: 'Calculated minimum width in pixels', defaultValue: 0 },
-        { id: 'Editor.ControlMaxWidth', name: 'Control Max Width', typeId: 'Number', description: 'Calculated maximum width in pixels', defaultValue: 1000 }
+        { id: 'Editor.ControlMinWidth', name: 'Control Min Width', typeId: 'Number', description: 'Calculated minimum width in pixels', defaultValue: 0, inputOutput: 1 },
+        { id: 'Editor.ControlMaxWidth', name: 'Control Max Width', typeId: 'Number', description: 'Calculated maximum width in pixels', defaultValue: 1000, inputOutput: 1 }
     ];
 }
 
