@@ -226,9 +226,8 @@ export class ShowAllPropertiesDialogComponent implements OnInit {
 
         editors.forEach(editor => {
             const defs = (editor.settingDefinitions as BBSettingDefinition[]) || [];
-            // Filter out global settings if they are already known (e.g. Type.Editor)
-            // But usually editors have their own specific settings lists
-            const editorDefs = defs.filter(d => d.id !== 'Type.Editor');
+            // Filter out type-level settings (Type.Editor, Type.Kind) that shouldn't appear in editor settings
+            const editorDefs = defs.filter(d => d.id !== 'Type.Editor' && d.id !== 'Type.Kind');
 
             const name = editor.name || editor.id;
             const title = editor.isInherited ? `${name} Settings (Inherited Editor)` : `${name} Settings`;
