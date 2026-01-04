@@ -67,6 +67,7 @@ export interface BBType {
     fieldBaseType: boolean; // Can this type be used as a field type?
     sourceType?: string; // For Type Defined types, the type that created this
     isDynamic?: boolean; // For meta-types like BBType and TypeEditor that compute values at runtime
+    sortPosition?: number; // Internal sort order for type list (lower = earlier)
 
     // For Basic types (Enums)
     values?: IDString[];
