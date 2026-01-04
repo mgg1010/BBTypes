@@ -28,6 +28,10 @@ import { AppConfig } from '../models/app-models';
                 <input type="checkbox" [(ngModel)]="showUserDefined" (ngModelChange)="onFilterChange()">
                 User
             </label>
+            <label class="filter-check">
+                <input type="checkbox" [(ngModel)]="showAnonymous" (ngModelChange)="onFilterChange()">
+                Anonymous
+            </label>
             
             <span style="flex:1"></span>
             
@@ -183,6 +187,7 @@ export class BBTypeListComponent implements OnInit, OnChanges {
   showSystem = false;
   showTypeDefined = false;
   showUserDefined = true;
+  showAnonymous = false;
 
   constructor(private bbTypeService: BBTypeService) { }
 
@@ -215,6 +220,9 @@ export class BBTypeListComponent implements OnInit, OnChanges {
 
   onFilterChange() {
     this.filteredTypes = this.types.filter(t => {
+      // Filter out anonymous types unless showAnonymous is enabled
+      if (t.isAnonymous && !this.showAnonymous) return false;
+
       if (t.source === 'User Defined' && !this.showUserDefined) return false;
       if (t.source === 'System' && !this.showSystem) return false;
       if (t.source === 'Type Defined' && !this.showTypeDefined) return false;
