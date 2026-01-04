@@ -186,33 +186,17 @@ import { calculateControlWidth } from './layout-helpers';
                                 <!-- Bottom Row: Complex Editor (if complex) -->
                                 @if (item.isComplex) {
                                     <div class="setting-complex-body">
-                                        @if (item.component === 'fields') {
-                                            <!-- OLD: Custom field list component (preserved for reference)
-                                            <app-bb-type-field-list 
-                                                [fields]="newType.fields || []"
-                                                [fieldGroups]="fieldGroups"
-                                                [showSelectionRadio]="false"
-                                                [showGroupDefinitions]="false"
-                                                [availableTypes]="availableTypes"
-                                                [isReadOnly]="isReadOnly"
-                                                (addField)="onAddField()"
-                                                (removeField)="onRemoveField($event)"
-                                                (selectField)="selectedField = $event"
-                                                (fieldsUpdated)="emitPreview()">
-                                            </app-bb-type-field-list>
-                                            -->
-                                            
-                                            <!-- NEW: Generic dynamic-field with runtime override to use HorzEdit for BBField -->
-                                            <!-- TODO: Migrate builder to store fields in newType.settings['Struct.Fields'] instead of newType.fields -->
+                                        @if (item.settingDef?.typeId === 'List') {
+                                            <!-- Generic List rendering with runtime overrides -->
                                             <app-dynamic-field
-                                                typeId="List"
-                                                [subtypeId]="'BBField'"
+                                                [typeId]="item.settingDef?.typeId || 'List'"
+                                                [subtypeId]="item.settingDef?.subtypeId"
                                                 [appConfig]="appConfig"
-                                                [(value)]="newType.fields"
+                                                [(value)]="item.value"
                                                 [mode]="isReadOnly ? 'read' : 'edit'"
                                                 [size]="'medium'"
-                                                [runtimeOverrides]="[{ fieldName: '*', settingId: 'Type.Editor', value: 'HorzEdit' }]"
-                                                (valueChange)="emitPreview()">
+                                                [runtimeOverrides]="item.settingDef?.subtypeId === 'BBField' ? [{ fieldName: '*', settingId: 'Type.Editor', value: 'HorzEdit' }] : []"
+                                                (valueChange)="updateSettingListItem(item.id, $event)">
                                             </app-dynamic-field>
                                         } @else if (item.component === 'groups') {
                                             <div class="groups-editor">
