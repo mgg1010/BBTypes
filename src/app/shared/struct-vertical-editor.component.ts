@@ -54,7 +54,7 @@ import { DynamicFieldComponent } from './dynamic-field.component';
          @if (fields.length === 0) {
             <div class="empty-struct-message">No fields defined for this struct.</div>
          }
-         @for (field of fields; track field.name) {
+         @for (field of fields; track field.FieldID || field.name || $index) {
             <div class="field-group">
                 <label #fieldLabel class="field-label">{{ field.Prompt || field.name }}:</label>
                 <div class="field-editor">
@@ -222,10 +222,7 @@ export class StructVerticalEditorComponent implements IEditorComponent<any>, OnI
     }
 
     ngAfterViewInit() {
-        // Recalculate prompt gap after view renders (to measure actual label widths)
-        if (this.promptPosition === 'left') {
-            setTimeout(() => this.calculatePromptGap(), 0);
-        }
+        // No longer needed - Canvas.measureText in ngOnInit is accurate without rendered elements
     }
 
     calculatePromptGap() {

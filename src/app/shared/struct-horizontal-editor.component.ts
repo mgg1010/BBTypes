@@ -1,4 +1,4 @@
-import { Component, Input, Output, EventEmitter, OnInit, OnChanges, SimpleChanges } from '@angular/core';
+import { Component, Input, Output, EventEmitter, OnInit, OnChanges, SimpleChanges, ChangeDetectionStrategy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { BBType, BBField } from '../models/bb-types';
@@ -11,6 +11,7 @@ import { GenericEditorDialogComponent } from './generic-editor-dialog.component'
     selector: 'app-struct-horizontal-editor',
     standalone: true,
     imports: [CommonModule, FormsModule, DynamicFieldComponent, GenericEditorDialogComponent],
+    changeDetection: ChangeDetectionStrategy.OnPush,
     template: `
     <div class="struct-horizontal-container" [style.gap.px]="gap">
         @for (field of visibleFields; track $index) {
@@ -124,12 +125,19 @@ export class StructHorizontalEditorComponent implements IEditorComponent<any>, O
         const allFields = this.settings['Struct.Fields'] || this.bbType?.fields || [];
         const groupNumber = this.settings['Struct.HorzEdit.ShowGroup'];
 
+        // Only update if fields source changed (prevents flicker from array recreation)
+        let newVisibleFields: BBField[];
         if (groupNumber !== undefined && groupNumber !== null && groupNumber !== 0) {
             // Filter by group number - match against the Group property on each field
-            this.visibleFields = allFields.filter((f: any) => f.Group === groupNumber);
+            newVisibleFields = allFields.filter((f: any) => f.Group === groupNumber);
         } else {
             // Show all fields if no group filter
-            this.visibleFields = allFields;
+            newVisibleFields = allFields;
+        }
+
+        // Only assign if actually changed to prevent unnecessary re-renders
+        if (JSON.stringify(newVisibleFields) !== JSON.stringify(this.visibleFields)) {
+            this.visibleFields = newVisibleFields;
         }
     }
 
