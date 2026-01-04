@@ -24,6 +24,23 @@ function getTypeEditorSetting(typeName: string): BBSettingDefinition {
     };
 }
 
+// Helper: Get Type.Kind setting for a type
+// Returns read-only enum setting indicating if type is System (0), TypeDefined (1), or User (2)
+function getTypeKindSetting(kind: '0' | '1' | '2' = '0'): BBSettingDefinition {
+    return {
+        id: 'Type.Kind',
+        name: 'Type Kind',
+        typeId: 'Enum',
+        values: [
+            { id: '0', text: 'System' },
+            { id: '1', text: 'TypeDefined' },
+            { id: '2', text: 'User' }
+        ],
+        readOnly: true,
+        defaultValue: kind
+    };
+}
+
 export const INITIAL_CORE_TYPES: BBType[] = [
     // --- Primitives / Core Types ---
     {
@@ -41,6 +58,7 @@ export const INITIAL_CORE_TYPES: BBType[] = [
         minLen: 0,
         minLenMsg: 'Must be %d characters or more',
         settingDefinitions: [
+            getTypeKindSetting('0'),
             { id: 'String.MinLen', name: 'Min Length', typeId: 'Number' },
             { id: 'String.MinLenMsg', name: 'Min Length Message', typeId: 'String' },
             { id: 'String.MaxLen', name: 'Max Length', typeId: 'Number' },
