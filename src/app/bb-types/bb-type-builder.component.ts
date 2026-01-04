@@ -195,7 +195,7 @@ import { calculateControlWidth } from './layout-helpers';
                                                 [(value)]="item.value"
                                                 [mode]="isReadOnly ? 'read' : 'edit'"
                                                 [size]="'medium'"
-                                                [runtimeOverrides]="item.settingDef?.subtypeId === 'BBField' ? [{ fieldName: '*', settingId: 'BBField.Editor', value: 'HorzEdit' }] : []"
+                                                [runtimeOverrides]="item.settingDef?.subtypeId === 'BBField' ? [{ fieldName: '*', settingId: 'Type.Editor', value: 'HorzEdit' }] : []"
                                                 (valueChange)="updateSettingListItem(item.id, $event)">
                                             </app-dynamic-field>
                                         } @else if (item.component === 'groups') {

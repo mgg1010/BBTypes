@@ -199,7 +199,7 @@ export class DynamicFieldComponent implements OnChanges {
         // 1. Resolve which editor to use
         let activeEditor: BBEditor | undefined;
         // Check manual input defaultEditorId, then explicit input editorId, then settings
-        const requestedEditorId = this.defaultEditorId || this.editorId || this.settings[`${currentType.id}.Editor`];
+        const requestedEditorId = this.defaultEditorId || this.editorId || this.settings['Type.Editor'];
 
         if (requestedEditorId) {
             activeEditor = (currentType.editors || []).find(e => e.id === requestedEditorId);
