@@ -809,8 +809,21 @@ export const INITIAL_CORE_TYPES: BBType[] = [
             name: 'Type Picker',
             type: 'System',
             baseEditorId: 'TypePicker',
-            publishedSettings: {},
-            settingDefinitions: [],
+            publishedSettings: {
+                'Type.Editor': 'published',
+                'BBType.SystemSource': 'published',
+                'BBType.TypeSource': 'published',
+                'BBType.UserSource': 'published',
+                'BBType.FieldBase': 'published',
+                'Editor.ReadOnly': 'published',
+                'Editor.Locale': 'published',
+                'Editor.StdFont': 'published',
+                'Editor.StdFontSize': 'published'
+            },
+            settingDefinitions: [
+                getTypeEditorSetting('BBType'),
+                ...getGlobalEditorSettings()
+            ],
             overrides: []
         }]
     },
