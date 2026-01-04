@@ -188,6 +188,14 @@ export class DynamicFieldComponent implements OnChanges {
             }
         }
 
+        // For Enum types, check if settings provide enum options
+        if (currentType.baseType === null && currentType.id === 'Enum' || this.settings['Enum.Options']) {
+            const enumOptions = this.settings['Enum.Options'];
+            if (enumOptions && Array.isArray(enumOptions)) {
+                currentType.values = enumOptions;
+            }
+        }
+
         // 1. Resolve which editor to use
         let activeEditor: BBEditor | undefined;
         // Check manual input defaultEditorId, then explicit input editorId, then settings
