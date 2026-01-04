@@ -167,6 +167,7 @@ import { calculateControlWidth } from './layout-helpers';
                                                         [mode]="'edit'"
                                                         [isDisabled]="isReadOnly || !!item.readOnly"
                                                         [size]="'small'"
+                                                        [settings]="item.settingDef && item.settingDef.values ? { 'Enum.Options': item.settingDef.values } : {}"
                                                         (valueChange)="emitPreview()">
                                                    </app-dynamic-field>
                                                 </div>
