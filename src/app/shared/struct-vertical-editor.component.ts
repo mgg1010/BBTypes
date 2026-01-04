@@ -55,13 +55,13 @@ import { DynamicFieldComponent } from './dynamic-field.component';
          }
          @for (field of fields; track $index) {
             <div class="field-group">
-                <label #fieldLabel class="field-label">{{ field.name }}:</label>
+                <label #fieldLabel class="field-label">{{ field.Prompt || field.FieldID }}:</label>
                 <div class="field-editor">
                      <app-dynamic-field
-                        [typeId]="field.typeId"
+                        [typeId]="field.TypeID"
                         [appConfig]="appConfig"
-                        [value]="value[field.name]"
-                        (valueChange)="onFieldValueChange(field.name, $event)"
+                        [value]="value[field.FieldID]"
+                        (valueChange)="onFieldValueChange(field.FieldID, $event)"
                         [mode]="mode"
                         [size]="size"
                         [isDisabled]="isDisabled"
@@ -229,7 +229,7 @@ export class StructVerticalEditorComponent implements IEditorComponent<any>, OnI
         } else {
             // Fallback: estimate based on text length (12px per character average)
             const allFields = this.fields;
-            const maxChars = Math.max(...allFields.map((f: any) => f.name.length), 0);
+            const maxChars = Math.max(...allFields.map((f: any) => (f.Prompt || f.FieldID || '').length), 0);
             maxPromptSize = maxChars * 12;
         }
 

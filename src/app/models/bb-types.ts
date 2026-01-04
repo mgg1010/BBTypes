@@ -29,9 +29,17 @@ export interface BBSettingDefinition {
 }
 
 export interface BBField {
-    name: string;
-    typeId: string; // Reference to another BBType by name or ID
+    Prompt?: string;         // Field label/prompt text
+    TypeID: string;          // Reference to another BBType by ID
+    FieldID: string;         // Unique field identifier
+    Required?: boolean;      // Whether field is required
+    Group?: number;          // Group number for organizing fields
+    Description?: string;    // Field description/help text
     settings?: Record<string, any>; // Per-field configuration (e.g. constraints, default editor)
+
+    // Legacy properties (for backward compatibility during migration)
+    name?: string;           // @deprecated Use FieldID
+    typeId?: string;        // @deprecated Use TypeID
 }
 
 export interface BBSettingOverride {
