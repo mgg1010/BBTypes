@@ -703,19 +703,20 @@ export const INITIAL_CORE_TYPES: BBType[] = [
         userDefined: false,
         source: 'System',
         fieldBaseType: false,
-        fields: [
-            { name: 'name', typeId: 'String' },
-            { name: 'typeId', typeId: 'String' },
-            { name: 'label', typeId: 'String' },
-            { name: 'description', typeId: 'String' }
-        ],
         settingDefinitions: [
             getTypeKindSetting(),
+            { id: 'Struct.Fields', name: 'Fields', typeId: 'List', subtypeId: 'BBField', mustOverride: true, noDelete: true, mandatory: true },
             { id: 'Type.Editors', name: 'Editors', typeId: 'List', subtypeId: 'BBEditor', mustOverride: true, noDelete: true }
         ],
         settings: {
             'Type.Kind': '0',
-            'Type.Editor': 'VertEdit'
+            'Type.Editor': 'VertEdit',
+            'Struct.Fields': [
+                { name: 'name', typeId: 'String' },
+                { name: 'typeId', typeId: 'String' },
+                { name: 'label', typeId: 'String' },
+                { name: 'description', typeId: 'String' }
+            ]
         },
         editors: [
             {
@@ -746,20 +747,21 @@ export const INITIAL_CORE_TYPES: BBType[] = [
         userDefined: false,
         source: 'System',
         fieldBaseType: false,
-        fields: [
-            { name: 'id', typeId: 'String' },
-            { name: 'name', typeId: 'String' },
-            { name: 'baseEditorId', typeId: 'String' },
-            { name: 'type', typeId: 'String' } // Useful to see System vs Custom
-        ],
         settingDefinitions: [
             getTypeKindSetting(),
+            { id: 'Struct.Fields', name: 'Fields', typeId: 'List', subtypeId: 'BBField', mustOverride: true, noDelete: true, mandatory: true },
             { id: 'Type.Editor', name: 'Default Editor', typeId: 'TypeEditor', subtypeId: 'BBEditor', description: 'Select which editor to use for BBEditor fields' },
             { id: 'Type.Editors', name: 'Editors', typeId: 'List', subtypeId: 'BBEditor', mustOverride: true, noDelete: true }
         ],
         settings: {
             'Type.Kind': '0',
-            'Type.Editor': 'VertEdit'
+            'Type.Editor': 'VertEdit',
+            'Struct.Fields': [
+                { name: 'id', typeId: 'String' },
+                { name: 'name', typeId: 'String' },
+                { name: 'baseEditorId', typeId: 'String' },
+                { name: 'type', typeId: 'String' }
+            ]
         },
         editors: [
             {
