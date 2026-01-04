@@ -41,17 +41,10 @@ import { calculateControlWidth } from './layout-helpers';
             <button [class.active]="activeTab === 'def'" (click)="activeTab = 'def'">Definition</button>
             <button [class.active]="activeTab === 'typeset'" (click)="activeTab = 'typeset'">Type Settings</button>
             
-            <!-- Dynamic Editor Tabs -->
-             <!-- Base Editor (Mock) -->
-             <button *ngIf="baseEditor" 
-                [class.active]="activeTab === 'editor_' + baseEditor.id" 
-                (click)="activeTab = 'editor_' + baseEditor.id">
-                {{ baseEditor.name }}
-             </button>
             
-             <!-- Custom Published Editors -->
+            <!-- Editor Tabs - one per editor in type's editors array -->
              @for (ed of newType.editors; track ed.id) {
-                 @if (!ed.isHidden && (!baseEditor || ed.id !== baseEditor.id)) {
+                 @if (!ed.isHidden) {
                      <button [class.active]="activeTab === 'editor_' + ed.id" (click)="activeTab = 'editor_' + ed.id">{{ ed.name }}</button>
                  }
              }
