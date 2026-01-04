@@ -808,10 +808,10 @@ export const INITIAL_CORE_TYPES: BBType[] = [
             'Type.Kind': '0',
             'Type.Editor': 'VertEdit',
             'Struct.Fields': [
-                { name: 'id', typeId: 'String' },
-                { name: 'name', typeId: 'String' },
-                { name: 'baseEditorId', typeId: 'String' },
-                { name: 'type', typeId: 'String' }
+                { Prompt: 'id', TypeID: 'String', FieldID: 'id', Required: false, Group: 0, Description: 'Unique identifier for the editor' },
+                { Prompt: 'name', TypeID: 'String', FieldID: 'name', Required: false, Group: 0, Description: 'Display name of the editor' },
+                { Prompt: 'baseEditorId', TypeID: 'String', FieldID: 'baseEditorId', Required: false, Group: 0, Description: 'Base editor component identifier' },
+                { Prompt: 'type', TypeID: 'String', FieldID: 'type', Required: false, Group: 0, Description: 'Editor type (System/User)' }
             ]
         },
         editors: [
