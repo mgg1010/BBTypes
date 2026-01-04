@@ -13,7 +13,7 @@ import { GenericEditorDialogComponent } from './generic-editor-dialog.component'
     imports: [CommonModule, FormsModule, DynamicFieldComponent, GenericEditorDialogComponent],
     template: `
     <div class="struct-horizontal-container" [style.gap.px]="gap">
-        @for (field of visibleFields; track field.name) {
+        @for (field of visibleFields; track $index) {
             <div class="field-wrapper" 
                  [style.flex-basis.px]="minWidth ? minWidth : 'auto'"
                  [style.min-width.px]="minWidth" 
