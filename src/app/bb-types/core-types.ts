@@ -49,9 +49,31 @@ export const INITIAL_CORE_TYPES: BBType[] = [
             { Id: '1', Text: 'TypeDefined' },
             { Id: '2', Text: 'User' }
         ],
-        settingDefinitions: [],
-        settings: {},
-        editors: []
+        settingDefinitions: [
+            { id: 'Type.Editors', name: 'Editors', typeId: 'List', subtypeId: 'BBEditor', mustOverride: true, noDelete: true }
+        ],
+        settings: {
+            'Type.Kind': '0',
+            'Type.Editor': 'EnumEdit'
+        },
+        editors: [{
+            id: 'EnumEdit',
+            name: 'Core Enum Editor',
+            type: 'System',
+            baseEditorId: 'Enum',
+            publishedSettings: {
+                'Type.Editor': 'published',
+                'Editor.ReadOnly': 'published',
+                'Editor.Locale': 'published',
+                'Editor.StdFont': 'published',
+                'Editor.StdFontSize': 'published'
+            },
+            settingDefinitions: [
+                getTypeEditorSetting('Enum'),
+                ...getGlobalEditorSettings()
+            ],
+            overrides: []
+        }]
     },
 
     // --- Primitives / Core Types ---
