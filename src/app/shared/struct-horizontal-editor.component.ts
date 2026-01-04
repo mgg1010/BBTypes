@@ -31,9 +31,10 @@ import { GenericEditorDialogComponent } from './generic-editor-dialog.component'
                         [appConfig]="appConfig"
                         [value]="value[getFieldKey(field)]"
                         (valueChange)="onFieldValueChange(getFieldKey(field), $event)"
-                        [mode]="mode"
+                        [mode]="'edit'"
                         [size]="size"
-                        [settings]="fieldSettings(field)"
+                        [isDisabled]="isDisabled"
+                        [settings]="settings"
                         [fieldName]="getFieldKey(field)">
                     </app-dynamic-field>
                 </div>
@@ -86,6 +87,7 @@ export class StructHorizontalEditorComponent implements IEditorComponent<any>, O
     @Input() bbType?: BBType = undefined;
     @Input() appConfig: AppConfig | null = null;
     @Input() settings: Record<string, any> = {};
+    @Input() isDisabled: boolean = false;
     @Output() valueChange = new EventEmitter<any>();
 
     visibleFields: BBField[] = [];

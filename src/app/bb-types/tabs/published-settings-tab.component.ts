@@ -25,16 +25,16 @@ import { AppConfig } from '../../models/app-models';
           @for (setting of typeSpecificSettings; track setting.id) {
             <tr>
               <td>
-                  <input [(ngModel)]="setting.name" placeholder="Setting Name">
+                  <input [(ngModel)]="setting.name" placeholder="Setting Name" [disabled]="isReadOnly">
               </td>
               <td>
                   <div class="id-input-group">
                       <span class="id-prefix">{{ prefixOverride || newType.id }}.</span>
-                      <input [ngModel]="getIDSuffix(setting)" (ngModelChange)="updateIDSuffix(setting, $event)" placeholder="Suffix">
+                      <input [ngModel]="getIDSuffix(setting)" (ngModelChange)="updateIDSuffix(setting, $event)" placeholder="Suffix" [disabled]="isReadOnly">
                   </div>
               </td>
               <td>
-                  <select [(ngModel)]="setting.typeId">
+                  <select [(ngModel)]="setting.typeId" [disabled]="isReadOnly">
                     <option value="String">String</option>
                     <option value="Number">Number</option>
                     <option value="Boolean">Boolean</option>
@@ -53,6 +53,7 @@ import { AppConfig } from '../../models/app-models';
                     [appConfig]="appConfig"
                     [(value)]="setting.defaultValue"
                     [mode]="'edit'"
+                    [isDisabled]="isReadOnly"
                     [size]="'small'">
                   </app-dynamic-field>
               </td>

@@ -193,7 +193,8 @@ import { calculateControlWidth } from './layout-helpers';
                                                 [subtypeId]="item.settingDef?.subtypeId"
                                                 [appConfig]="appConfig"
                                                 [(value)]="item.value"
-                                                [mode]="isReadOnly ? 'read' : 'edit'"
+                                                [mode]="'edit'"
+                                                [isDisabled]="isReadOnly"
                                                 [size]="'medium'"
                                                 [runtimeOverrides]="item.settingDef?.subtypeId === 'BBField' ? [{ fieldName: '*', settingId: 'Type.Editor', value: 'HorzEdit' }] : []"
                                                 (valueChange)="updateSettingListItem(item.id, $event)">
