@@ -785,7 +785,7 @@ export const INITIAL_CORE_TYPES: BBType[] = [
         baseType: null,
         userDefined: false,
         source: 'System',
-        fieldBaseType: false, // Meta-type, not for struct fields
+        fieldBaseType: true, // Allow testing BBType picker
         isDynamic: true, // Flag to indicate values are computed dynamically
 
         // Type Settings control which types appear in the list
