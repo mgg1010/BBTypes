@@ -186,9 +186,11 @@ export class AddSettingDialogComponent {
     }
 
     get availableBaseSettings(): BBSettingDefinition[] {
-        // Mock: return Type.Editor if not present?
+        // Common type settings that can be added
         return [
-            { id: 'Type.Editor', name: 'Type Editor', typeId: 'String' }
+            { id: 'Type.Editor', name: 'Type Editor', typeId: 'String' },
+            { id: 'Type.Editors', name: 'Editors', typeId: 'List', subtypeId: 'BBEditor' },
+            { id: 'Struct.Fields', name: 'Fields', typeId: 'List', subtypeId: 'BBField' }
         ];
     }
 
