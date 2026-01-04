@@ -78,7 +78,7 @@ import { DynamicFieldComponent } from './dynamic-field.component';
     .struct-vertical-container {
         display: flex;
         flex-direction: column;
-        gap: 10px;
+        gap: 0px;
     }
     
     .struct-vertical-container.bordered {
