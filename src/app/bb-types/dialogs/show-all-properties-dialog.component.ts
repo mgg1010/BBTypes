@@ -45,7 +45,15 @@ interface SettingSection {
                         <tbody>
                             @for (row of section.rows; track row.id) {
                                 <tr>
-                                    <td>{{ row.name }}</td>
+                                    <td>
+                                        {{ row.name }}
+                                        @if (row.definition.readOnly) {
+                                            <span class="setting-flag" title="Read-only setting">RO</span>
+                                        }
+                                        @if (row.definition.inputOutput === 1) {
+                                            <span class="setting-flag output-flag" title="Output (calculated) setting">Out</span>
+                                        }
+                                    </td>
                                     <td class="id-col">{{ row.id }}</td>
                                     <td>
                                         <app-dynamic-field
@@ -100,6 +108,22 @@ interface SettingSection {
     
     .id-col { color: #888; font-family: monospace; font-size: 12px; }
     .inherited-label { color: #999; font-style: italic; font-size: 11px; margin-left: 8px; }
+    
+    .setting-flag {
+        display: inline-block;
+        margin-left: 6px;
+        padding: 2px 6px;
+        background: #e3f2fd;
+        color: #1976d2;
+        border-radius: 3px;
+        font-size: 10px;
+        font-weight: 600;
+        vertical-align: middle;
+    }
+    .setting-flag.output-flag {
+        background: #fff3e0;
+        color: #f57c00;
+    }
     
     .primary-btn { background: #2196F3; color: white; border: none; padding: 8px 16px; border-radius: 4px; cursor: pointer; }
   `]

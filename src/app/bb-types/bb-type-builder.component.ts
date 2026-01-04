@@ -140,6 +140,12 @@ import { calculateControlWidth } from './layout-helpers';
                                 <div class="setting-top-row">
                                     <div class="setting-label-area">
                                         <span class="setting-label">{{ item.label }}:</span>
+                                        @if (item.settingDef?.readOnly) {
+                                            <span class="setting-flag" title="Read-only setting">RO</span>
+                                        }
+                                        @if (item.settingDef?.inputOutput === 1) {
+                                            <span class="setting-flag output-flag" title="Output (calculated) setting">Output</span>
+                                        }
                                     </div>
 
                                     <!-- Inline Editor Area (for non-complex) -->
