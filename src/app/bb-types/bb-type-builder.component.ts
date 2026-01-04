@@ -1073,10 +1073,13 @@ export class BBTypeBuilderComponent implements OnInit {
 
         if (editorId === 'VertEdit') {
           list = getVertEditSettings();
-          // Bind values
+          // Bind values from type settings, preserving defaults if not set
           list.forEach(item => {
             if (item.settingDef) {
-              item.value = this.newType.settings?.[item.settingDef.id];
+              const settingValue = this.newType.settings?.[item.settingDef.id];
+              if (settingValue !== undefined) {
+                item.value = settingValue;
+              }
             }
           });
         } else {
