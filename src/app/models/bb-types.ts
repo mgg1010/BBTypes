@@ -30,8 +30,8 @@ export interface BBSettingDefinition {
 
 export interface BBField {
     Prompt?: string;         // Field label/prompt text
-    TypeID: string;          // Reference to another BBType by ID
-    FieldID: string;         // Unique field identifier
+    TypeID: string;          // Reference to another BBType by ID (REQUIRED)
+    FieldID: string;         // Unique field identifier (REQUIRED)
     Required?: boolean;      // Whether field is required
     Group?: number;          // Group number for organizing fields
     Description?: string;    // Field description/help text

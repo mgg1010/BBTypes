@@ -25,25 +25,25 @@ import { DynamicFieldComponent } from './dynamic-field.component';
             <select [(ngModel)]="activeUnionField" (change)="onUnionChange()">
                 <option [ngValue]="null">Select Type...</option>
                 @for (field of fields; track $index) {
-                    <option [ngValue]="field">{{ field.name }}</option>
+                    <option [ngValue]="field">{{ field.Prompt || field.FieldID }}</option>
                 }
             </select>
          </div>
          
          @if (activeUnionField) {
             <div class="field-group">
-                <label #fieldLabel class="field-label">{{ activeUnionField.name }}:</label>
+                <label #fieldLabel class="field-label">{{ activeUnionField.Prompt || activeUnionField.FieldID }}:</label>
                 <div class="field-editor">
                     <app-dynamic-field
-                        [typeId]="activeUnionField.typeId"
+                        [typeId]="activeUnionField.TypeID"
                         [appConfig]="appConfig"
-                        [value]="value[activeUnionField.name]"
-                        (valueChange)="onFieldValueChange(activeUnionField.name, $event)"
+                        [value]="value[activeUnionField.FieldID]"
+                        (valueChange)="onFieldValueChange(activeUnionField.FieldID, $event)"
                         [mode]="mode"
                         [size]="size"
                         [isDisabled]="isDisabled"
                         [settings]="settings"
-                        [fieldName]="activeUnionField.name">
+                        [fieldName]="activeUnionField.FieldID">
                     </app-dynamic-field>
                 </div>
             </div>
@@ -66,7 +66,7 @@ import { DynamicFieldComponent } from './dynamic-field.component';
                         [size]="size"
                         [isDisabled]="isDisabled"
                         [settings]="settings"
-                        [fieldName]="field.name">
+                        [fieldName]="field.FieldID">
                     </app-dynamic-field>
                 </div>
             </div>
