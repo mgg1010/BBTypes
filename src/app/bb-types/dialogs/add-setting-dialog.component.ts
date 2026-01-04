@@ -55,8 +55,8 @@ import { DynamicFieldComponent } from '../../shared/dynamic-field.component';
                              Field:
                              <select [ngModel]="selectedField" (ngModelChange)="onFieldChange($event)">
                                  <option value="*">All Fields</option>
-                                 @for (f of currentType?.fields; track f.name) {
-                                     <option [value]="f.name">{{ f.name }}</option>
+                                 @for (f of currentType?.fields; track f.FieldID) {
+                                     <option [value]="f.FieldID">{{ f.Prompt || f.FieldID }}</option>
                                  }
                              </select>
                          </label>
@@ -254,9 +254,9 @@ export class AddSettingDialogComponent {
             this.typeDisabled = false;
         } else {
             // Find field in currentType
-            const field = this.currentType?.fields?.find(f => f.name === newField);
+            const field = this.currentType?.fields?.find(f => f.FieldID === newField);
             if (field) {
-                this.selectedType = field.typeId;
+                this.selectedType = field.TypeID;
                 this.typeDisabled = true;
             } else {
                 // Fallback
@@ -343,7 +343,7 @@ export class AddSettingDialogComponent {
         } else {
             if (this.currentType?.fields) {
                 this.currentType.fields.forEach(f => {
-                    const t = allTypes.find(at => at.id === f.typeId);
+                    const t = allTypes.find(at => at.id === f.TypeID);
                     if (t) typesToCheck.push(t);
                 });
             }
