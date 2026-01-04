@@ -419,8 +419,8 @@ import { calculateControlWidth } from './layout-helpers';
     .scope-header { background: #eee; padding: 4px 15px; color: #333; font-size: 13px; letter-spacing: 0.5px; font-weight: bold; margin-top: 5px; }
     .setting-row-container { background: white; /* border-bottom: 1px solid #ddd; */ }
     
-    .setting-top-row { display: flex; align-items: center; padding: 4px 15px; height: 32px; gap: 10px; }
-    .setting-label-area { width: 130px; display: flex; align-items: center; } /* Increased width to separate from prompts */
+    .setting-top-row { display: flex; align-items: flex-start; padding: 4px 15px; min-height: 32px; gap: 10px; }
+    .setting-label-area { width: 90px; display: flex; align-items: center; padding-top: 4px; } /* Reduced width by 40px, top-aligned */
     .setting-label { font-weight: 500; font-size: 13px; color: #444; }
     
     .setting-editor-area { display: flex; align-items: center; margin-right: auto; } /* Hug content, push rest right */

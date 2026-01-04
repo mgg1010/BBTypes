@@ -50,11 +50,11 @@ import { BBTypeService } from '../services/bb-type.service';
             (dragend)="onDragEnd($event)"
             (drop)="onDrop($event, $index)">
             
-            @if (showDragHandles) {
+            @if (showDragHandles && !isDisabled) {
                 <div class="drag-handle" title="Drag to reorder">⋮⋮</div>
             }
             
-            @if (useSelection) {
+            @if (useSelection && !isDisabled) {
                 <div class="checkbox-wrapper">
                   <input type="checkbox" [(ngModel)]="checkedItems[$index]">
                 </div>
@@ -85,7 +85,7 @@ import { BBTypeService } from '../services/bb-type.service';
                }
             </div>
 
-            @if (!useSelection) {
+            @if (!useSelection  && !isDisabled) {
                 <button class="inline-delete-btn" (click)="deleteItem($index)" title="Delete item" [disabled]="isDisabled">🗑️</button>
             }
           </div>
@@ -97,28 +97,30 @@ import { BBTypeService } from '../services/bb-type.service';
         }
       </div>
 
-      <div class="toolbar">
-        @if (useSelection) {
-            <button 
-            class="delete-btn" 
-            [disabled]="!hasCheckedItems || isDisabled" 
-            (click)="deleteCheckedItems()"
-            title="Delete selected items">
-            🗑️
-            </button>
-            <span class="spacer"></span>
-        } @else {
-            <span class="spacer"></span>
-        }
-        
-        <button 
-          class="add-btn" 
-          (click)="addItem()"
-          title="Add new item"
-          [disabled]="isDisabled">
-          +
-        </button>
-      </div>
+      @if (!isDisabled) {
+        <div class="toolbar">
+          @if (useSelection) {
+              <button 
+              class="delete-btn" 
+              [disabled]="!hasCheckedItems || isDisabled" 
+              (click)="deleteCheckedItems()"
+              title="Delete selected items">
+              🗑️
+              </button>
+              <span class="spacer"></span>
+          } @else {
+              <span class="spacer"></span>
+          }
+          
+          <button 
+            class="add-btn" 
+            (click)="addItem()"
+            title="Add new item"
+            [disabled]="isDisabled">
+            +
+          </button>
+        </div>
+      }
     </div>
   `,
   styles: [`

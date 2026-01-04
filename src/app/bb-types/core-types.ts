@@ -32,9 +32,9 @@ function getTypeKindSetting(kind: '0' | '1' | '2' = '0'): BBSettingDefinition {
         name: 'Type Kind',
         typeId: 'Enum',
         values: [
-            { id: '0', text: 'System' },
-            { id: '1', text: 'TypeDefined' },
-            { id: '2', text: 'User' }
+            { Id: '0', Text: 'System' },
+            { Id: '1', Text: 'TypeDefined' },
+            { Id: '2', Text: 'User' }
         ],
         readOnly: true,
         defaultValue: kind
