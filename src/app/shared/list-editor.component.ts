@@ -13,7 +13,7 @@ import { BBTypeService } from '../services/bb-type.service';
   imports: [CommonModule, FormsModule, DynamicEditorComponent, DynamicFieldComponent],
   template: `
     <div class="list-editor-container" [ngClass]="size">
-      <div class="list-items" (dragover)="onDragOver($event)">
+      <div class="list-items" (dragover)="onDragOver($event)" [style.gap.px]="itemGapPx">
         <!-- Header Row -->
         @if (hasHeaders && subtypeId) {
              <div class="list-item header-row" style="background: #fafafa; border-bottom: 2px solid #eee;">
@@ -136,6 +136,11 @@ import { BBTypeService } from '../services/bb-type.service';
       padding: 6px; /* Reduced padding */
       background: #fdfdfd;
       min-width: 300px;
+    }
+
+    .items-container {
+      display: flex;
+      flex-direction: column;
     }
 
     .list-item {
@@ -290,6 +295,7 @@ export class ListEditorComponent implements IEditorComponent<any[]>, OnInit {
 
   checkedItems: boolean[] = [];
   draggedIndex: number | null = null;
+  itemGapPx: number = 5; // Default gap between list items
 
   get showDragHandles(): boolean {
     // Auto-hide if list is not ordered (can't reorder an unordered list)
@@ -322,6 +328,9 @@ export class ListEditorComponent implements IEditorComponent<any[]>, OnInit {
   constructor(private bbTypeService: BBTypeService) { }
 
   ngOnInit() {
+    // Read List.ItemGap setting
+    const itemGap = this.settings['List.ItemGap'];
+    this.itemGapPx = itemGap !== undefined ? itemGap : 5; // Default 5px
   }
 
   onItemChange(index: number, newValue: any) {

@@ -18,6 +18,7 @@ import { DynamicFieldComponent } from './dynamic-field.component';
          [class.prompt-left]="promptPosition === 'left'"
          [class.prompt-inside]="promptPosition === 'inside'"
          [style.--prompt-gap]="promptGapPx + 'px'"
+         [style.--field-gap]="fieldGapPx + 'px'"
          [style.--prompt-align]="promptAlign">
       @if (bbType?.baseType === 'Union') {
          <!-- Union Logic: Pick one field -->
@@ -80,7 +81,7 @@ import { DynamicFieldComponent } from './dynamic-field.component';
     .struct-vertical-container {
         display: flex;
         flex-direction: column;
-        gap: 0px;
+        gap: var(--field-gap, 3px); /* Vertical gap between fields */
     }
     
     .struct-vertical-container.bordered {
@@ -113,16 +114,17 @@ import { DynamicFieldComponent } from './dynamic-field.component';
     .struct-vertical-container.prompt-left .field-group {
         display: flex;
         flex-direction: row;
-        align-items: start;
-        gap: 5px; /* Gap between prompt area and editor */
+        align-items: baseline; /* Baseline align for text alignment across any font */
+        gap: 0px; /* No gap between prompt area and editor */
     }
     
     .struct-vertical-container.prompt-left .field-label {
         flex-shrink: 0;
-        margin-left: 10px; /* 10px from left edge */
-        width: var(--prompt-gap, 120px);
+        margin-left: 0px;
+        width: var(--prompt-gap, 80px);
         text-align: var(--prompt-align, right);
-        padding-top: 6px; /* Align with input text */
+        padding-right: 8px;
+        padding-top: 0;
         font-weight: 500;
         color: #555;
         font-size: 13px;
@@ -171,6 +173,7 @@ export class StructVerticalEditorComponent implements IEditorComponent<any>, OnI
     promptPosition: 'above' | 'left' | 'inside' = 'left';
     promptAlign: 'left' | 'right' = 'right';
     promptGapPx: number = 120; // Default
+    fieldGapPx: number = 3; // Default vertical gap between fields
 
     // Get fields from settings (modern) or bbType.fields (legacy)
     get fields(): BBField[] {
@@ -200,6 +203,10 @@ export class StructVerticalEditorComponent implements IEditorComponent<any>, OnI
         if (alignSetting === 0 || alignSetting === 'left') this.promptAlign = 'left';
         else this.promptAlign = 'right'; // Default (1 or 'right')
 
+        // Field gap (vertical spacing between fields)
+        const fieldGap = this.settings['Struct.VertEdit.FieldGap'];
+        this.fieldGapPx = fieldGap !== undefined ? fieldGap : 3; // Default 3px
+
         // Calculate prompt gap (only relevant for 'left' position)
         if (this.promptPosition === 'left') {
             this.calculatePromptGap();
@@ -222,30 +229,46 @@ export class StructVerticalEditorComponent implements IEditorComponent<any>, OnI
     }
 
     calculatePromptGap() {
-        const promptMinSpace = this.settings['Struct.VertEdit.PromptMinSpace'] || 0;
-        const promptMaxSpace = this.settings['Struct.VertEdit.PromptMaxSpace'] || 1000;
+        const promptMinSpace = this.settings['Struct.VertEdit.PromptMinSpace'] || 20;
+        const promptMaxSpace = this.settings['Struct.VertEdit.PromptMaxSpace'];
 
-        // Measure max prompt size
+        // Measure max prompt size using Canvas API for pixel-perfect accuracy
         let maxPromptSize = 0;
 
-        if (this.fieldLabels && this.fieldLabels.length > 0) {
-            // Measure actual rendered label widths
-            this.fieldLabels.forEach(labelRef => {
-                const width = labelRef.nativeElement.scrollWidth;
+        // Create a canvas context for precise text measurement
+        const canvas = document.createElement('canvas');
+        const context = canvas.getContext('2d');
+        if (context) {
+            // Set the font to match our CSS (500 weight, 13px)
+            context.font = '500 13px system-ui, -apple-system, sans-serif';
+
+            // Measure each field's displayed prompt text
+            const allFields = this.fields;
+            allFields.forEach((f: any) => {
+                const displayText = f.Prompt || f.name || '';
+                const metrics = context.measureText(displayText);
+                const width = metrics.width;
                 if (width > maxPromptSize) {
                     maxPromptSize = width;
                 }
             });
         } else {
-            // Fallback: estimate based on text length (12px per character average)
+            // Fallback if canvas not available (should never happen)
             const allFields = this.fields;
-            const maxChars = Math.max(...allFields.map((f: any) => f.name.length), 0);
-            maxPromptSize = maxChars * 12;
+            const maxChars = Math.max(...allFields.map((f: any) => {
+                const displayText = f.Prompt || f.name || '';
+                return displayText.length;
+            }), 0);
+            maxPromptSize = maxChars * 8;
         }
 
+        // Add small padding for the colon and spacing (8px)
+        maxPromptSize += 8;
+
         // Apply the algorithm:
-        // PromptGap = Min(Max(MaxPromptSize, PromptMinSize), PromptMaxSize)
-        const effectiveMaxSpace = promptMaxSpace || 1000;
+        // PromptGap = Max(MaxPromptSize, PromptMinSize) capped by PromptMaxSize
+        // PromptMinSpace defines the minimum left position (not added to width)
+        const effectiveMaxSpace = promptMaxSpace || 9999;
         this.promptGapPx = Math.min(
             Math.max(maxPromptSize, promptMinSpace),
             effectiveMaxSpace

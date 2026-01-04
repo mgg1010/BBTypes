@@ -104,7 +104,7 @@ interface SettingSection {
     
     .settings-table { width: 100%; border-collapse: collapse; table-layout: fixed; margin-bottom: 10px; }
     .settings-table th { text-align: left; padding: 8px; border-bottom: 2px solid #eee; color: #666; font-size: 12px; }
-    .settings-table td { padding: 6px 8px; border-bottom: 1px solid #f0f0f0; vertical-align: middle; font-size: 13px; }
+    .settings-table td { padding: 6px 8px; border-bottom: 1px solid #f0f0f0; vertical-align: top; font-size: 13px; }
     
     .id-col { color: #888; font-family: monospace; font-size: 12px; }
     .inherited-label { color: #999; font-style: italic; font-size: 11px; margin-left: 8px; }
