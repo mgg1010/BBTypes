@@ -24,7 +24,7 @@ import { DynamicFieldComponent } from './dynamic-field.component';
          <div class="union-selector">
             <select [(ngModel)]="activeUnionField" (change)="onUnionChange()">
                 <option [ngValue]="null">Select Type...</option>
-                @for (field of bbType?.fields || []; track field.name) {
+                @for (field of fields; track field.name) {
                     <option [ngValue]="field">{{ field.name }}</option>
                 }
             </select>
@@ -228,8 +228,8 @@ export class StructVerticalEditorComponent implements IEditorComponent<any>, OnI
             });
         } else {
             // Fallback: estimate based on text length (12px per character average)
-            const fields = this.bbType?.fields || [];
-            const maxChars = Math.max(...fields.map(f => f.name.length), 0);
+            const allFields = this.fields;
+            const maxChars = Math.max(...allFields.map((f: any) => f.name.length), 0);
             maxPromptSize = maxChars * 12;
         }
 
