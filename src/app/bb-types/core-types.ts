@@ -44,6 +44,8 @@ export const INITIAL_CORE_TYPES: BBType[] = [
         userDefined: false,
         source: 'System',
         fieldBaseType: false,
+        isAnonymous: true,
+        sortPosition: 1,
         values: [
             { Id: '0', Text: 'System' },
             { Id: '1', Text: 'TypeDefined' },
@@ -85,6 +87,7 @@ export const INITIAL_CORE_TYPES: BBType[] = [
         userDefined: false,
         source: 'System',
         fieldBaseType: true,
+        sortPosition: 7,
         // Intrinsic fields
         validationRules: [],
         maxLen: 100000,
@@ -831,10 +834,11 @@ export const INITIAL_CORE_TYPES: BBType[] = [
         id: 'TypeEditor',
         name: 'TypeEditor',
         description: 'Stores the ID of a Type Editor.  Has an Editor itself which presents a list of editors for a given Type',
-        baseType: 'Core',
+        baseType: null,
         userDefined: false,
         source: 'System',
         fieldBaseType: false, // Meta-type, not for struct fields
+        sortPosition: 4,
         isDynamic: true, // Flag to indicate values are computed dynamically
 
         // Type Setting specifies which type's editors to show
