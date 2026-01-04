@@ -613,7 +613,7 @@ export const INITIAL_CORE_TYPES: BBType[] = [
                 getTypeEditorSetting('Struct'),
                 ...getGlobalEditorSettings(),
                 { id: 'Struct.HorzEdit.ControlGap', name: 'Control Gap', typeId: 'Number', description: 'Gap in pixels between each field editor', defaultValue: 10 },
-                { id: 'Struct.HorzEdit.ShowGroup', name: 'Show Group', typeId: 'String', description: 'Name of the Field Group to show. If set, only shows fields in this group.' },
+                { id: 'Struct.HorzEdit.ShowGroup', name: 'Show Group', typeId: 'Number', description: 'Number of the Field Group to show. If set, only shows fields in this group.' },
                 { id: 'Struct.HorzEdit.Buttons', name: 'Buttons', typeId: 'List', subtypeId: 'Button', description: 'Buttons to show at the right side' },
                 { id: 'Struct.HorzEdit.ShowHeaders', name: 'Show Headers', typeId: 'Boolean', description: 'If true, show a header block with field names above controls' }
             ],

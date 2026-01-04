@@ -83,11 +83,11 @@ export function getHorzEditSettings(): BBSettingListItem[] {
         id: 'Struct.HorzEdit.ShowGroup',
         label: 'Show Group',
         type: 'setting',
-        value: '',
+        value: 0,
         scope: 'root',
         readOnly: true,
         removable: false,
-        settingDef: { id: 'Struct.HorzEdit.ShowGroup', name: 'Show Group', typeId: 'String' }
+        settingDef: { id: 'Struct.HorzEdit.ShowGroup', name: 'Show Group', typeId: 'Number' }
     });
 
     list.push({
