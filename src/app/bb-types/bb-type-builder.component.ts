@@ -21,7 +21,7 @@ import { calculateControlWidth } from './layout-helpers';
   imports: [
     CommonModule,
     FormsModule,
-    BBTypeFieldListComponent,
+    // BBTypeFieldListComponent, // Commented out - replaced with generic dynamic-field approach
     AddSettingDialogComponent,
     AddEditorSettingDialogComponent,
     DynamicFieldComponent,
@@ -203,11 +203,12 @@ import { calculateControlWidth } from './layout-helpers';
                                             -->
                                             
                                             <!-- NEW: Generic dynamic-field with runtime override to use HorzEdit for BBField -->
+                                            <!-- TODO: Migrate builder to store fields in newType.settings['Struct.Fields'] instead of newType.fields -->
                                             <app-dynamic-field
                                                 typeId="List"
                                                 [subtypeId]="'BBField'"
                                                 [appConfig]="appConfig"
-                                                [(value)]="newType.settings['Struct.Fields']"
+                                                [(value)]="newType.fields"
                                                 [mode]="isReadOnly ? 'read' : 'edit'"
                                                 [size]="'medium'"
                                                 [runtimeOverrides]="[{ fieldName: '*', settingId: 'Type.Editor', value: 'HorzEdit' }]"
