@@ -78,6 +78,59 @@ export const INITIAL_CORE_TYPES: BBType[] = [
         }]
     },
 
+    // --- Anonymous Enum: Struct.VertEdit.PromptPosition ---
+    {
+        id: 'Struct.VertEdit.PromptPosition',
+        name: 'Prompt Position',
+        baseType: 'Enum',
+        userDefined: false,
+        source: 'System',
+        fieldBaseType: false,
+        isAnonymous: true,
+        values: [
+            { Id: 0, Text: 'Left' },
+            { Id: 1, Text: 'Above' },
+            { Id: 2, Text: 'Inside' }
+        ],
+        settingDefinitions: [],
+        settings: { 'Type.Editor': 'EnumEdit' },
+        editors: [{
+            id: 'EnumEdit',
+            name: 'Enum Editor',
+            type: 'System',
+            baseEditorId: 'Enum',
+            publishedSettings: {},
+            settingDefinitions: [],
+            overrides: []
+        }]
+    },
+
+    // --- Anonymous Enum: Struct.VertEdit.PromptAlign ---
+    {
+        id: 'Struct.VertEdit.PromptAlign',
+        name: 'Prompt Align',
+        baseType: 'Enum',
+        userDefined: false,
+        source: 'System',
+        fieldBaseType: false,
+        isAnonymous: true,
+        values: [
+            { Id: 0, Text: 'Left' },
+            { Id: 1, Text: 'Right' }
+        ],
+        settingDefinitions: [],
+        settings: { 'Type.Editor': 'EnumEdit' },
+        editors: [{
+            id: 'EnumEdit',
+            name: 'Enum Editor',
+            type: 'System',
+            baseEditorId: 'Enum',
+            publishedSettings: {},
+            settingDefinitions: [],
+            overrides: []
+        }]
+    },
+
     // --- Primitives / Core Types ---
     {
         id: 'String',
@@ -769,7 +822,9 @@ export const INITIAL_CORE_TYPES: BBType[] = [
                 baseEditorId: 'struct-vertical',
                 publishedSettings: {},
                 settingDefinitions: [getTypeEditorSetting('BBEditor')],
-                overrides: []
+                overrides: [
+                    { fieldName: 'Struct.Fields', settingId: 'Type.Editor', value: 'HorzEdit' }
+                ]
             },
             {
                 id: 'HorzEdit',
