@@ -117,6 +117,7 @@ export const INITIAL_CORE_TYPES: BBType[] = [
 
         // Type Settings
         settingDefinitions: [
+            getTypeKindSetting('0'),
             { id: 'Number.AllowNegative', name: 'Allow Negative', typeId: 'Boolean' },
             { id: 'Number.AllowNegativeMsg', name: 'Allow Negative Message', typeId: 'String' },
             { id: 'Number.AllowDecimals', name: 'Allow Decimals', typeId: 'Boolean' },
@@ -192,6 +193,7 @@ export const INITIAL_CORE_TYPES: BBType[] = [
             { Id: 1, Text: 'True' }
         ],
         settingDefinitions: [
+            getTypeKindSetting('0'),
             { id: 'Enum.Options', name: 'Options', typeId: 'List', subtypeId: 'IDString' },
             { id: 'Type.Editors', name: 'Editors', typeId: 'List', subtypeId: 'BBEditor', mustOverride: true, noDelete: true }
         ],
@@ -246,6 +248,7 @@ export const INITIAL_CORE_TYPES: BBType[] = [
         source: 'System',
         fieldBaseType: true,
         settingDefinitions: [
+            getTypeKindSetting('0'),
             { id: 'Type.Editors', name: 'Editors', typeId: 'List', subtypeId: 'BBEditor', mustOverride: true, noDelete: true }
         ],
         settings: {
@@ -270,6 +273,7 @@ export const INITIAL_CORE_TYPES: BBType[] = [
         source: 'System',
         fieldBaseType: true,
         settingDefinitions: [
+            getTypeKindSetting('0'),
             { id: 'Type.Editors', name: 'Editors', typeId: 'List', subtypeId: 'BBEditor', mustOverride: true, noDelete: true }
         ],
         settings: {
@@ -306,6 +310,7 @@ export const INITIAL_CORE_TYPES: BBType[] = [
             { Id: 'Brush Script MT', Text: 'Brush Script MT' }
         ],
         settingDefinitions: [
+            getTypeKindSetting('0'),
             { id: 'Font.AllowedValues', name: 'Allowed Values', typeId: 'List', subtypeId: 'IDString' },
             { id: 'Type.Editors', name: 'Editors', typeId: 'List', subtypeId: 'BBEditor', mustOverride: true, noDelete: true }
         ],
@@ -345,6 +350,7 @@ export const INITIAL_CORE_TYPES: BBType[] = [
         // Type Settings
         values: [], // Default empty options
         settingDefinitions: [
+            getTypeKindSetting('0'),
             { id: 'Enum.Options', name: 'Options', typeId: 'List', subtypeId: 'IDString' },
             { id: 'Type.Editors', name: 'Editors', typeId: 'List', subtypeId: 'BBEditor', mustOverride: true, noDelete: true }
         ],
@@ -381,6 +387,7 @@ export const INITIAL_CORE_TYPES: BBType[] = [
         subtypeId: 'String', // Default subtype
         // Type Settings
         settingDefinitions: [
+            getTypeKindSetting('0'),
             { id: 'List.Ordered', name: 'Ordered', typeId: 'Boolean', description: 'If true, the list order is important' },
             { id: 'Type.Editors', name: 'Editors', typeId: 'List', subtypeId: 'BBEditor', mustOverride: true, noDelete: true }
         ],
@@ -422,6 +429,7 @@ export const INITIAL_CORE_TYPES: BBType[] = [
         source: 'System',
         fieldBaseType: true,
         settingDefinitions: [
+            getTypeKindSetting('0'),
             { id: 'Type.Editors', name: 'Editors', typeId: 'List', subtypeId: 'BBEditor', mustOverride: true, noDelete: true }
         ],
         settings: {
