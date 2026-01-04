@@ -187,6 +187,7 @@ import { calculateControlWidth } from './layout-helpers';
                                 @if (item.isComplex) {
                                     <div class="setting-complex-body">
                                         @if (item.component === 'fields') {
+                                            <!-- OLD: Custom field list component (preserved for reference)
                                             <app-bb-type-field-list 
                                                 [fields]="newType.fields || []"
                                                 [fieldGroups]="fieldGroups"
@@ -199,6 +200,19 @@ import { calculateControlWidth } from './layout-helpers';
                                                 (selectField)="selectedField = $event"
                                                 (fieldsUpdated)="emitPreview()">
                                             </app-bb-type-field-list>
+                                            -->
+                                            
+                                            <!-- NEW: Generic dynamic-field with runtime override to use HorzEdit for BBField -->
+                                            <app-dynamic-field
+                                                typeId="List"
+                                                [subtypeId]="'BBField'"
+                                                [appConfig]="appConfig"
+                                                [(value)]="newType.settings['Struct.Fields']"
+                                                [mode]="isReadOnly ? 'read' : 'edit'"
+                                                [size]="'medium'"
+                                                [runtimeOverrides]="[{ fieldName: '*', settingId: 'Type.Editor', value: 'HorzEdit' }]"
+                                                (valueChange)="emitPreview()">
+                                            </app-dynamic-field>
                                         } @else if (item.component === 'groups') {
                                             <div class="groups-editor">
                                                 <div class="list-header">
