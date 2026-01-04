@@ -294,7 +294,7 @@ export class TypeOverridesTabComponent {
     } else if (typeId === '_ANY_') {
       // Merge all settings from all types used in fields
       const distinctTypes = new Set<string>();
-      (this.newType.fields || []).forEach(f => distinctTypes.add(f.typeId));
+      (this.newType.fields || []).forEach(f => f.TypeID && distinctTypes.add(f.TypeID));
 
       let allSettings: BBSettingDefinition[] = [];
       const seenIds = new Set<string>();

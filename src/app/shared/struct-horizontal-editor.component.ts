@@ -19,18 +19,18 @@ import { GenericEditorDialogComponent } from './generic-editor-dialog.component'
                  [style.min-width.px]="minWidth" 
                  [style.max-width.px]="maxWidth">
                 @if (showHeaders) {
-                    <div class="field-label" [title]="field.name">{{ field.name }}</div>
+                    <div class="field-label" [title]="field.Prompt || field.FieldID">{{ field.Prompt || field.FieldID }}</div>
                 }
                 <div class="field-editor">
                     <app-dynamic-field
-                        [typeId]="field.typeId"
+                        [typeId]="field.TypeID"
                         [appConfig]="appConfig"
-                        [value]="value[field.name]"
-                        (valueChange)="onFieldValueChange(field.name, $event)"
+                        [value]="value[field.FieldID]"
+                        (valueChange)="onFieldValueChange(field.FieldID, $event)"
                         [mode]="mode"
                         [size]="size"
                         [settings]="fieldSettings(field)"
-                        [fieldName]="field.name">
+                        [fieldName]="field.FieldID">
                     </app-dynamic-field>
                 </div>
             </div>
