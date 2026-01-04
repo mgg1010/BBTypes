@@ -82,7 +82,7 @@ export const INITIAL_CORE_TYPES: BBType[] = [
     {
         id: 'Struct.VertEdit.PromptPosition',
         name: 'Prompt Position',
-        baseType: 'Enum',
+        baseType: null,
         userDefined: false,
         source: 'System',
         fieldBaseType: false,
@@ -109,7 +109,7 @@ export const INITIAL_CORE_TYPES: BBType[] = [
     {
         id: 'Struct.VertEdit.PromptAlign',
         name: 'Prompt Align',
-        baseType: 'Enum',
+        baseType: null,
         userDefined: false,
         source: 'System',
         fieldBaseType: false,
