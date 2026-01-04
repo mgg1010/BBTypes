@@ -503,7 +503,6 @@ export const INITIAL_CORE_TYPES: BBType[] = [
         settingDefinitions: [
             getTypeKindSetting(),
             { id: 'Struct.Fields', name: 'Fields', typeId: 'List', subtypeId: 'BBField', mustOverride: true, noDelete: true, mandatory: true },
-            { id: 'Struct.FieldGroups', name: 'Field Groups', typeId: 'List', subtypeId: 'IDString' },
             { id: 'Type.Editors', name: 'Editors', typeId: 'List', subtypeId: 'BBEditor', mustOverride: true, noDelete: true }
         ],
         fields: [],
@@ -679,9 +678,6 @@ export const INITIAL_CORE_TYPES: BBType[] = [
             { id: 'Struct.Fields', name: 'Fields', typeId: 'Custom', mustOverride: true, noDelete: true, mandatory: true },
             { id: 'Type.Editors', name: 'Editors', typeId: 'List', subtypeId: 'BBEditor', mustOverride: true, noDelete: true }
         ],
-        publishedSettings: {
-            'Struct.FieldGroups': 'hidden'
-        },
         editors: [{
             id: 'default',
             name: 'Core Struct Editor',
