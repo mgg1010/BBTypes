@@ -68,8 +68,49 @@ export function getHorzEditSettings(): BBSettingListItem[] {
     // Header
     list.push({ id: 'h1_base', label: 'Base Editor Settings', type: 'header', scope: 'root' });
 
-    // Horizontal editor might have different settings in the future
-    // For now, keeping it simple - just showing it has potential for settings
+    list.push({
+        id: 'Struct.HorzEdit.ControlGap',
+        label: 'Control Gap',
+        type: 'setting',
+        value: 10,
+        scope: 'root',
+        readOnly: true,
+        removable: false,
+        settingDef: { id: 'Struct.HorzEdit.ControlGap', name: 'Control Gap', typeId: 'Number' }
+    });
+
+    list.push({
+        id: 'Struct.HorzEdit.ShowGroup',
+        label: 'Show Group',
+        type: 'setting',
+        value: '',
+        scope: 'root',
+        readOnly: true,
+        removable: false,
+        settingDef: { id: 'Struct.HorzEdit.ShowGroup', name: 'Show Group', typeId: 'String' }
+    });
+
+    list.push({
+        id: 'Struct.HorzEdit.Buttons',
+        label: 'Buttons',
+        type: 'setting',
+        value: [],
+        scope: 'root',
+        readOnly: true,
+        removable: false,
+        settingDef: { id: 'Struct.HorzEdit.Buttons', name: 'Buttons', typeId: 'List', subtypeId: 'Button' }
+    });
+
+    list.push({
+        id: 'Struct.HorzEdit.ShowHeaders',
+        label: 'Show Headers',
+        type: 'setting',
+        value: false,
+        scope: 'root',
+        readOnly: true,
+        removable: false,
+        settingDef: { id: 'Struct.HorzEdit.ShowHeaders', name: 'Show Headers', typeId: 'Boolean' }
+    });
 
     return list;
 }
