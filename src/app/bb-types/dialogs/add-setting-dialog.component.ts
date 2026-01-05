@@ -193,17 +193,16 @@ export class AddSettingDialogComponent {
     get availableBaseSettings(): BBSettingDefinition[] {
         if (!this.currentType) return [];
 
-        const baseType = this.currentType.baseType;
-        const settings: BBSettingDefinition[] = [
-            { id: 'Type.Editor', name: 'Type Editor', typeId: 'String' }
-        ];
+        // Get all available settings for this type from the service
+        // This will include settings from the base type (Struct, List, etc.)
+        const allSettings = this.bbTypeService.getAvailableSettings(this.currentType);
 
-        // Only show Struct.Fields for Struct base types
-        if (baseType === 'Struct') {
-            settings.push({ id: 'Struct.Fields', name: 'Fields', typeId: 'List', subtypeId: 'BBField' });
-        }
-
-        return settings;
+        // Filter to only "base" settings (not field-specific)
+        // Base settings are those that apply at the type level
+        return allSettings.filter(def => {
+            // Exclude field-specific settings (those are in Field Settings tab)
+            return !def.appliesToTypes || def.appliesToTypes.length === 0;
+        });
     }
 
     get currentTypeFields(): any[] {
