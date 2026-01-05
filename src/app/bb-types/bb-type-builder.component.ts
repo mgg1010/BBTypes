@@ -534,7 +534,7 @@ export class BBTypeBuilderComponent implements OnInit {
   @Output() create = new EventEmitter<BBType>();
   @Output() previewUpdate = new EventEmitter<BBType>();
 
-  newType: any = { name: '', baseType: 'Struct', fields: [], editors: [] };
+  newType: any = { name: '', baseType: 'Struct', editors: [] };
   basedOnType = 'struct';
   activeTab = 'def'; // 'def', 'pub', 'over', 'editor_ID'
 
@@ -668,7 +668,7 @@ export class BBTypeBuilderComponent implements OnInit {
     } else {
       // New Type Creation
       if (this.isAnonymousMode) {
-        this.newType = { name: '', baseType: 'Struct', fields: [], editors: [] };
+        this.newType = { name: '', baseType: 'Struct', editors: [], settings: {} };
         baseKind = 'Struct';
       } else {
         this.newType = this.bbTypeService.createNewType('Struct', 'New Prototype');

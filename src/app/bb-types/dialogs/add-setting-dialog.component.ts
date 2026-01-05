@@ -57,7 +57,7 @@ import { DynamicFieldComponent } from '../../shared/dynamic-field.component';
                              Field:
                              <select [ngModel]="selectedField" (ngModelChange)="onFieldChange($event)">
                                  <option value="*">All Fields</option>
-                                 @for (f of currentType?.fields; track f.name) {
+                                 @for (f of currentTypeFields; track f.name) {
                                      <option [value]="f.name">{{ f.name }}</option>
                                  }
                              </select>
@@ -191,11 +191,24 @@ export class AddSettingDialogComponent {
     }
 
     get availableBaseSettings(): BBSettingDefinition[] {
-        // Common type settings that can be added
-        return [
-            { id: 'Type.Editor', name: 'Type Editor', typeId: 'String' },
-            { id: 'Struct.Fields', name: 'Fields', typeId: 'List', subtypeId: 'BBField' }
+        if (!this.currentType) return [];
+
+        const baseType = this.currentType.baseType;
+        const settings: BBSettingDefinition[] = [
+            { id: 'Type.Editor', name: 'Type Editor', typeId: 'String' }
         ];
+
+        // Only show Struct.Fields for Struct base types
+        if (baseType === 'Struct') {
+            settings.push({ id: 'Struct.Fields', name: 'Fields', typeId: 'List', subtypeId: 'BBField' });
+        }
+
+        return settings;
+    }
+
+    get currentTypeFields(): any[] {
+        // Read fields from settings['Struct.Fields'] instead of type.fields
+        return this.currentType?.settings?.['Struct.Fields'] || [];
     }
 
     get availableFieldTypes(): string[] {
@@ -259,12 +272,14 @@ export class AddSettingDialogComponent {
             this.typeDisabled = false;
         } else {
             // Find field in currentType
-            const field = this.currentType?.fields?.find(f => f.name === newField);
+            const field = this.currentTypeFields?.find(f => f.name === newField);
             if (field) {
                 this.selectedType = field.typeId;
                 this.typeDisabled = true;
             } else {
                 // Fallback
+                const types = this.availableFieldTypes;
+                this.selectedType = types.length > 0 ? types[0] : '*';
                 this.typeDisabled = false;
             }
         }
@@ -346,8 +361,8 @@ export class AddSettingDialogComponent {
             const t = allTypes.find(t => t.id === this.selectedType);
             if (t) typesToCheck.push(t);
         } else {
-            if (this.currentType?.fields) {
-                this.currentType.fields.forEach(f => {
+            if (this.currentTypeFields) {
+                this.currentTypeFields.forEach(f => {
                     const t = allTypes.find(at => at.id === f.typeId);
                     if (t) typesToCheck.push(t);
                 });
