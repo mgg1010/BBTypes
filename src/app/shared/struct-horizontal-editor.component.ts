@@ -36,29 +36,31 @@ import { GenericEditorDialogComponent } from './generic-editor-dialog.component'
             </div>
         }
         
-        <!-- Data Row -->
-        <div class="data-row" [style.gap.px]="gap">
-            @for (field of visibleFields; track $index) {
-                <div class="field-wrapper" 
-                     [style.flex-basis.px]="minWidth ? minWidth : 'auto'"
-                     [style.min-width.px]="minWidth" 
-                     [style.max-width.px]="maxWidth">
-                    <div class="field-editor">
-                        <app-dynamic-field
-                            [typeId]="getFieldType(field)"
-                            [appConfig]="appConfig"
-                            [value]="value[getFieldKey(field)]"
-                            (valueChange)="onFieldValueChange(getFieldKey(field), $event)"
-                            [mode]="'edit'"
-                            [size]="size"
-                            [isDisabled]="isDisabled"
-                            [settings]="settings"
-                            [fieldName]="getFieldKey(field)">
-                        </app-dynamic-field>
+        <!-- Data Row (hidden when showHeaders is true) -->
+        @if (!showHeaders) {
+            <div class="data-row" [style.gap.px]="gap">
+                @for (field of visibleFields; track $index) {
+                    <div class="field-wrapper" 
+                         [style.flex-basis.px]="minWidth ? minWidth : 'auto'"
+                         [style.min-width.px]="minWidth" 
+                         [style.max-width.px]="maxWidth">
+                        <div class="field-editor">
+                            <app-dynamic-field
+                                [typeId]="getFieldType(field)"
+                                [appConfig]="appConfig"
+                                [value]="value[getFieldKey(field)]"
+                                (valueChange)="onFieldValueChange(getFieldKey(field), $event)"
+                                [mode]="'edit'"
+                                [size]="size"
+                                [isDisabled]="isDisabled"
+                                [settings]="settings"
+                                [fieldName]="getFieldKey(field)">
+                            </app-dynamic-field>
+                        </div>
                     </div>
-                </div>
-            }
-        </div>
+                }
+            </div>
+        }
         
         @if (buttons.length > 0) {
             <div class="buttons-wrapper">
