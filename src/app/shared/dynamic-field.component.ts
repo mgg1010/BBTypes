@@ -79,6 +79,13 @@ export class DynamicFieldComponent implements OnChanges {
     previousValue: any = null;
     @Input() isDisabled = false;
 
+    // Track previous values to avoid unnecessary reloads
+    private previousTypeId?: string;
+    private previousSubtypeId?: string;
+    private previousEditorId?: string;
+    private previousMode?: EditorMode;
+    private previousSize?: EditorSize;
+
     constructor(
         private bbTypeService: BBTypeService,
         private settingsService: SettingsService,
@@ -95,7 +102,16 @@ export class DynamicFieldComponent implements OnChanges {
             return;
         }
 
-        if (changes['typeId'] || changes['subtypeId'] || changes['editorId'] || changes['settings'] || changes['mode'] || changes['size']) {
+        // Only reload if critical inputs actually changed (not just reference changes)
+        const needsReload =
+            (changes['typeId'] && this.typeId !== this.previousTypeId) ||
+            (changes['subtypeId'] && this.subtypeId !== this.previousSubtypeId) ||
+            (changes['editorId'] && this.editorId !== this.previousEditorId) ||
+            (changes['mode'] && this.mode !== this.previousMode) ||
+            (changes['size'] && this.size !== this.previousSize) ||
+            (changes['settings'] && this.hasSettingsChanged(changes['settings'].previousValue, this.settings));
+
+        if (needsReload) {
             this.loadComponent();
         } else if (this.componentRef) {
             // Propagate changes to instance
@@ -109,11 +125,30 @@ export class DynamicFieldComponent implements OnChanges {
         }
     }
 
+    private hasSettingsChanged(prev: Record<string, any> | undefined, curr: Record<string, any>): boolean {
+        if (!prev) return true;
+
+        // Check critical settings that affect component loading
+        const criticalKeys = ['Type.Editor', 'Struct.HorzEdit.ShowHeaders', 'List.CoreEdit.ShowHeaders'];
+        for (const key of criticalKeys) {
+            if (prev[key] !== curr[key]) return true;
+        }
+
+        return false;
+    }
+
     async loadComponent() {
         this.container.clear();
         this.error = undefined;
 
         if (!this.typeId) return;
+
+        // Track current values for next comparison
+        this.previousTypeId = this.typeId;
+        this.previousSubtypeId = this.subtypeId;
+        this.previousEditorId = this.editorId;
+        this.previousMode = this.mode;
+        this.previousSize = this.size;
 
         const types = this.appConfig
             ? [...this.bbTypeService.getTypes().filter(t => !t.userDefined), ...this.appConfig.types]

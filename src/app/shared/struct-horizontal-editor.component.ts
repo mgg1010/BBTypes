@@ -1,4 +1,4 @@
-import { Component, Input, Output, EventEmitter, OnInit, OnChanges, OnDestroy, SimpleChanges, ChangeDetectionStrategy } from '@angular/core';
+import { Component, Input, Output, EventEmitter, OnInit, OnChanges, SimpleChanges, ChangeDetectionStrategy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { BBType, BBField } from '../models/bb-types';
@@ -178,17 +178,11 @@ export class StructHorizontalEditorComponent implements IEditorComponent<any>, O
     modalTitle = 'Edit Details';
 
     ngOnInit() {
-        console.log('HorzEdit INIT', { showHeaders: this.showHeaders });
         this.updateConfig();
     }
 
     ngOnChanges(changes: SimpleChanges) {
-        console.log('HorzEdit CHANGES', { headerCells: this.headerCells.length, changes: Object.keys(changes) });
         this.updateLayout();
-    }
-
-    ngOnDestroy() {
-        console.log('HorzEdit DESTROY');
     }
 
     updateLayout() {

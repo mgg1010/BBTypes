@@ -18,11 +18,20 @@ export class DynamicEditorComponent implements OnChanges, OnDestroy {
     @Output() valueChange = new EventEmitter<any>();
 
     private componentRef?: ComponentRef<IEditorComponent<any>>;
+    private currentComponentType?: Type<IEditorComponent<any>>;
 
     constructor(private viewContainerRef: ViewContainerRef) { }
 
     ngOnChanges(changes: SimpleChanges): void {
-        if (changes['componentType'] && this.componentType) {
+        console.log('dynamic-editor ngOnChanges', {
+            hasComponentTypeChange: !!changes['componentType'],
+            componentType: this.componentType?.name,
+            currentType: this.currentComponentType?.name,
+            willReload: changes['componentType'] && this.componentType && this.componentType !== this.currentComponentType
+        });
+
+        if (changes['componentType'] && this.componentType && this.componentType !== this.currentComponentType) {
+            console.log('RELOADING component', this.componentType.name);
             this.loadComponent();
         }
 
@@ -51,6 +60,7 @@ export class DynamicEditorComponent implements OnChanges, OnDestroy {
     private loadComponent(): void {
         this.viewContainerRef.clear();
         this.componentRef = this.viewContainerRef.createComponent(this.componentType);
+        this.currentComponentType = this.componentType; // Track the current type
 
         // Set initial inputs
         this.componentRef.instance.value = this.value;
