@@ -1268,4 +1268,19 @@ export class BBTypeBuilderComponent implements OnInit {
       this.newType.id = this.newType.name.replace(/\s+/g, '');
     }
   }
+
+  getRuntimeOverrides(item: BBSettingListItem): any[] {
+    const useHorizontalEditor =
+      item.settingDef?.subtypeId === 'BBField' ||
+      item.settingDef?.subtypeId === 'BBEditor' ||
+      item.settingDef?.id === 'Struct.Fields' ||
+      item.settingDef?.id === 'Type.Editors' ||
+      item.id === 'Struct.Fields' ||
+      item.id === 'Type.Editors';
+
+    return useHorizontalEditor ? [
+      { fieldName: '*', settingId: 'Type.Editor', value: 'HorzEdit' },
+      { fieldName: '*', settingId: 'List.CoreEdit.ShowHeaders', value: true }
+    ] : [];
+  }
 }
