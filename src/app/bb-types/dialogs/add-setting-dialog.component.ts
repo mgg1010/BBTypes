@@ -194,15 +194,9 @@ export class AddSettingDialogComponent {
         if (!this.currentType) return [];
 
         // Get all available settings for this type from the service
-        // This will include settings from the base type (Struct, List, etc.)
-        const allSettings = this.bbTypeService.getAvailableSettings(this.currentType);
-
-        // Filter to only "base" settings (not field-specific)
-        // Base settings are those that apply at the type level
-        return allSettings.filter(def => {
-            // Exclude field-specific settings (those are in Field Settings tab)
-            return !def.appliesToTypes || def.appliesToTypes.length === 0;
-        });
+        // This will include settings from the base type (Struct, List, String, etc.)
+        // getAvailableSettings already filters to applicable settings
+        return this.bbTypeService.getAvailableSettings(this.currentType);
     }
 
     get currentTypeFields(): any[] {
