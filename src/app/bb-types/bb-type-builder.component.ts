@@ -557,7 +557,10 @@ export class BBTypeBuilderComponent implements OnInit {
 
   availableEditors: any[] = [];
 
-  constructor(private bbTypeService: BBTypeService) { }
+  constructor(
+    private bbTypeService: BBTypeService,
+    private typeBuilderService: BBTypeBuilderService
+  ) { }
 
   get availableTypes(): BBType[] {
     return this.bbTypeService.getTypes();
@@ -742,32 +745,14 @@ export class BBTypeBuilderComponent implements OnInit {
   }
 
   save() {
-    // Sync all settings from settingsList back to newType.settings
-    this.settingsList.forEach(item => {
-      if (item.type === 'setting' && item.settingDef) {
-        this.newType.settings[item.settingDef.id] = item.value;
-      }
-    });
+    // Sync settings using service
+    this.typeBuilderService.syncSettingsToType(this.newType, this.settingsList);
 
-    // Validate Mandatory Settings
-    const mandatorySettings = this.settingsList.filter(item => item.settingDef?.mandatory);
-    for (const item of mandatorySettings) {
-      if (item.settingDef?.id === 'Struct.Fields') {
-        // Check in settings, not type.fields
-        const fields = this.newType.settings['Struct.Fields'];
-        if (!fields || fields.length === 0) {
-          alert(`The '${item.label}' setting is mandatory. Please add at least one field.`);
-          return;
-        }
-      } else {
-        // Generic check (e.g. for Lists or strings)
-        // If value is undefined, null, or empty array/string?
-        const val = item.value;
-        if (val === undefined || val === null || (typeof val === 'string' && val.trim() === '') || (Array.isArray(val) && val.length === 0)) {
-          alert(`The '${item.label}' setting is mandatory.`);
-          return;
-        }
-      }
+    // Validate using service
+    const validation = this.typeBuilderService.validateMandatorySettings(this.newType, this.settingsList);
+    if (!validation.valid) {
+      alert(validation.message);
+      return;
     }
 
     // All validations passed, emit create event
@@ -775,28 +760,7 @@ export class BBTypeBuilderComponent implements OnInit {
   }
 
   getEditorsForItem(item: BBSettingListItem): any[] {
-    // Special case: Type.Editor should show THIS type's editors, not base type's
-    if (item.settingDef?.id === 'Type.Editor' && (!item.scope || item.scope === 'root')) {
-      return this.newType.editors || [];
-    }
-
-    if (!item.scope || item.scope === 'root') {
-      return this.availableEditors;
-    }
-
-    if (item.scope.startsWith('field:')) {
-      const fieldName = item.scope.split('field:')[1];
-      const fields = this.newType.settings['Struct.Fields'] || [];
-      const field = fields.find((f: any) => f.name === fieldName);
-      if (field) {
-        const type = this.availableTypes.find(t => t.id === field.typeId);
-        if (type) {
-          if (type.editors && type.editors.length > 0) return type.editors;
-          return this.bbTypeService.getDefaultEditorsForBase(type.baseType, type.subtypeId);
-        }
-      }
-    }
-    return [];
+    return this.typeBuilderService.getEditorsForItem(this.newType, item, this.availableEditors);
   }
 
   initializeSettingsListContinue() {
@@ -949,16 +913,11 @@ export class BBTypeBuilderComponent implements OnInit {
 
   // Field List Delegations
   onAddField() {
-    if (!this.newType.settings['Struct.Fields']) {
-      this.newType.settings['Struct.Fields'] = [];
-    }
-    this.newType.settings['Struct.Fields'].push({ name: '', typeId: 'String' });
+    this.typeBuilderService.addField(this.newType);
     this.emitPreview();
   }
   onRemoveField(index: number) {
-    const fields = this.newType.settings['Struct.Fields'] || [];
-    fields.splice(index, 1);
-    this.newType.settings['Struct.Fields'] = fields;
+    this.typeBuilderService.removeField(this.newType, index);
     this.emitPreview();
   }
 
@@ -996,10 +955,7 @@ export class BBTypeBuilderComponent implements OnInit {
   }
 
   setDefaultEditor(editorId: string) {
-    if (!this.newType.settings) {
-      this.newType.settings = {};
-    }
-    this.newType.settings['Type.Editor'] = editorId;
+    this.typeBuilderService.setDefaultEditor(this.newType, editorId);
     this.emitPreview();
   }
 

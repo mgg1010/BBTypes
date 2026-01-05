@@ -1,20 +1,8 @@
 import { Injectable } from '@angular/core';
-import { BBType, BBField, BBEditor, BBSettingDefinition } from '../../models/bb-types';
+import { BBType, BBField, BBEditor, BBSettingDefinition, BBSettingListItem } from '../../models/bb-types';
 import { BBTypeService } from '../../services/bb-type.service';
 import { SettingsService } from '../../services/settings.service';
 import { calculateControlWidth } from '../layout-helpers';
-
-export interface BBSettingListItem {
-    id: string;
-    label: string;
-    value: any;
-    type: 'setting' | 'group-header';
-    settingDef?: BBSettingDefinition;
-    scope?: string;
-    hidden?: boolean;
-    readOnly?: boolean;
-    group?: number;
-}
 
 @Injectable({
     providedIn: 'root'
@@ -55,9 +43,9 @@ export class BBTypeBuilderService {
                     id: `group-${groupNum}`,
                     label: `Group ${groupNum}`,
                     value: null,
-                    type: 'group-header',
+                    type: 'header',
                     group: groupNum
-                });
+                } as any);
             }
 
             // Add settings in this group
@@ -74,7 +62,7 @@ export class BBTypeBuilderService {
                     hidden: false,
                     readOnly: def.readOnly || false,
                     group: groupNum
-                });
+                } as any);
             });
         });
 
