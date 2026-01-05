@@ -771,7 +771,7 @@ export const INITIAL_CORE_TYPES: BBType[] = [
                 },
                 {
                     name: 'TypeID',
-                    typeId: 'String',
+                    typeId: 'BBType',
                     settings: {
                         'String.MinVisible': 20,
                         'String.MaxLen': 20
@@ -847,10 +847,10 @@ export const INITIAL_CORE_TYPES: BBType[] = [
             'Type.Kind': '0',
             'Type.Editor': 'VertEdit',
             'Struct.Fields': [
-                { Prompt: 'id', TypeID: 'String', FieldID: 'id', Required: false, Group: 0, Description: 'Unique identifier for the editor' },
-                { Prompt: 'name', TypeID: 'String', FieldID: 'name', Required: false, Group: 0, Description: 'Display name of the editor' },
-                { Prompt: 'baseEditorId', TypeID: 'String', FieldID: 'baseEditorId', Required: false, Group: 0, Description: 'Base editor component identifier' },
-                { Prompt: 'type', TypeID: 'String', FieldID: 'type', Required: false, Group: 0, Description: 'Editor type (System/User)' }
+                { Prompt: 'Name', TypeID: 'String', FieldID: 'name', Required: false, Group: 0, Description: 'Display name of the editor' },
+                { Prompt: 'ID', TypeID: 'String', FieldID: 'id', Required: false, Group: 0, Description: 'Unique identifier for the editor' },
+                { Prompt: 'Based On', TypeID: 'String', FieldID: 'baseEditorId', Required: false, Group: 0, Description: 'Base editor component identifier' },
+                { Prompt: 'Type', TypeID: 'String', FieldID: 'type', Required: false, Group: 0, Description: 'Editor type (System/User)' }
             ]
         },
         editors: [

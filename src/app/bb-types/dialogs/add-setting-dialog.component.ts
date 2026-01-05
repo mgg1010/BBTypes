@@ -32,7 +32,9 @@ import { DynamicFieldComponent } from '../../shared/dynamic-field.component';
                     <div class="settings-list">
                          <h4>Settings for {{ baseTypeName }}</h4>
                          @for (setting of availableBaseSettings; track setting.id) {
-                            <div class="setting-row" [class.disabled]="isSettingAdded(setting.id)">
+                            <div class="setting-row" 
+                                 [class.disabled]="isSettingAdded(setting.id)"
+                                 (click)="!isSettingAdded(setting.id) && selectSetting(setting)">
                                  <div class="setting-info">
                                      <span class="setting-name">{{ setting.name }}</span>
                                      <span class="setting-id">{{ setting.id }}</span>
@@ -40,7 +42,7 @@ import { DynamicFieldComponent } from '../../shared/dynamic-field.component';
                                  @if (isSettingAdded(setting.id)) {
                                      <span class="already-added">Already In Settings List</span>
                                  }
-                                 <button class="add-btn small" (click)="selectSetting(setting)" [disabled]="isSettingAdded(setting.id)">+</button>
+                                 <button class="add-btn small" (click)="$event.stopPropagation(); selectSetting(setting)" [disabled]="isSettingAdded(setting.id)">+</button>
                             </div>
                          }
                          @if (availableBaseSettings.length === 0) {
@@ -73,7 +75,9 @@ import { DynamicFieldComponent } from '../../shared/dynamic-field.component';
                     
                     <div class="settings-list">
                          @for (setting of filteredFieldSettings; track setting.id) {
-                            <div class="setting-row" [class.disabled]="isSettingAdded(setting.id)">
+                            <div class="setting-row" 
+                                 [class.disabled]="isSettingAdded(setting.id)"
+                                 (click)="!isSettingAdded(setting.id) && selectSetting(setting, true)">
                                  <div class="setting-info">
                                      <span class="setting-name">{{ setting.name }}</span>
                                      <span class="setting-id">{{ setting.id }}</span>
@@ -86,7 +90,7 @@ import { DynamicFieldComponent } from '../../shared/dynamic-field.component';
                                         @if (getCheckResult(setting.id) === 'multiple') {
                                            <span class="multiple-defaults">Multiple Defaults</span>
                                         } @else if (getCheckResult(setting.id) === 'single') {
-                                            <div class="readonly-editor-wrapper">
+                                            <div class="readonly-editor-wrapper" (click)="$event.stopPropagation()">
                                                  <app-dynamic-field
                                                      [typeId]="setting.typeId"
                                                      [subtypeId]="setting.subtypeId"
@@ -102,7 +106,7 @@ import { DynamicFieldComponent } from '../../shared/dynamic-field.component';
                                      }
                                  </div>
 
-                                 <button class="add-btn small" (click)="selectSetting(setting, true)" [disabled]="isSettingAdded(setting.id)" style="margin-left: 10px;">+</button>
+                                 <button class="add-btn small" (click)="$event.stopPropagation(); selectSetting(setting, true)" [disabled]="isSettingAdded(setting.id)" style="margin-left: 10px;">+</button>
                              </div>
                          }
                          @if (filteredFieldSettings.length === 0) {
@@ -132,8 +136,9 @@ import { DynamicFieldComponent } from '../../shared/dynamic-field.component';
     .filters select { margin-top: 5px; padding: 5px; border: 1px solid #ddd; border-radius: 4px; }
 
     .settings-list { display: flex; flex-direction: column; gap: 10px; }
-    .setting-row { display: flex; align-items: center; justify-content: space-between; padding: 10px; border: 1px solid #eee; border-radius: 4px; }
-    .setting-row.disabled { opacity: 0.7; background: #f9f9f9; }
+    .setting-row { display: flex; align-items: center; justify-content: space-between; padding: 10px; border: 1px solid #eee; border-radius: 4px; cursor: pointer; transition: background 0.2s; }
+    .setting-row:hover:not(.disabled) { background: #f5f5f5; }
+    .setting-row.disabled { opacity: 0.7; background: #f9f9f9; cursor: not-allowed; }
     
     .setting-info { display: flex; flex-direction: column; flex: 0 0 35%; }
     .setting-name { font-weight: bold; }

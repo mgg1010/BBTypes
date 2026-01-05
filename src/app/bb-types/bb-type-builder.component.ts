@@ -14,6 +14,7 @@ import { ShowAllPropertiesDialogComponent } from './dialogs/show-all-properties-
 import { ElementRef } from '@angular/core';
 import { getVertEditSettings, getHorzEditSettings } from './bb-builder-helpers';
 import { calculateControlWidth } from './layout-helpers';
+import { BBTypeBuilderService } from './services/bb-type-builder.service';
 
 @Component({
   selector: 'app-bb-type-builder',
@@ -546,7 +547,8 @@ export class BBTypeBuilderComponent implements OnInit {
   // Cache runtime overrides to prevent creating new arrays on every call
   private readonly HORIZONTAL_EDITOR_OVERRIDES = [
     { fieldName: '*', settingId: 'Type.Editor', value: 'HorzEdit' },
-    { fieldName: '*', settingId: 'List.CoreEdit.ShowHeaders', value: true }
+    { fieldName: '*', settingId: 'List.CoreEdit.ShowHeaders', value: true },
+    { fieldName: '*', settingId: 'List.CoreEdit.RowSelection', value: false }
   ];
   private readonly EMPTY_OVERRIDES: any[] = [];
 
@@ -740,36 +742,52 @@ export class BBTypeBuilderComponent implements OnInit {
   }
 
   save() {
+    // Sync all settings from settingsList back to newType.settings
+    this.settingsList.forEach(item => {
+      if (item.type === 'setting' && item.settingDef) {
+        this.newType.settings[item.settingDef.id] = item.value;
+      }
+    });
+
     // Validate Mandatory Settings
     const mandatorySettings = this.settingsList.filter(item => item.settingDef?.mandatory);
     for (const item of mandatorySettings) {
       if (item.settingDef?.id === 'Struct.Fields') {
-        if (!this.newType.fields || this.newType.fields.length === 0) {
+        // Check in settings, not type.fields
+        const fields = this.newType.settings['Struct.Fields'];
+        if (!fields || fields.length === 0) {
           alert(`The '${item.label}' setting is mandatory. Please add at least one field.`);
           return;
-        } else {
-          // Generic check (e.g. for Lists or strings)
-          // If value is undefined, null, or empty array/string?
-          const val = item.value;
-          if (val === undefined || val === null || (typeof val === 'string' && val.trim() === '') || (Array.isArray(val) && val.length === 0)) {
-            alert(`The '${item.label}' setting is mandatory.`);
-            return;
-          }
+        }
+      } else {
+        // Generic check (e.g. for Lists or strings)
+        // If value is undefined, null, or empty array/string?
+        const val = item.value;
+        if (val === undefined || val === null || (typeof val === 'string' && val.trim() === '') || (Array.isArray(val) && val.length === 0)) {
+          alert(`The '${item.label}' setting is mandatory.`);
+          return;
         }
       }
-
-      this.create.emit(this.newType);
     }
+
+    // All validations passed, emit create event
+    this.create.emit(this.newType);
   }
 
   getEditorsForItem(item: BBSettingListItem): any[] {
+    // Special case: Type.Editor should show THIS type's editors, not base type's
+    if (item.settingDef?.id === 'Type.Editor' && (!item.scope || item.scope === 'root')) {
+      return this.newType.editors || [];
+    }
+
     if (!item.scope || item.scope === 'root') {
       return this.availableEditors;
     }
 
     if (item.scope.startsWith('field:')) {
       const fieldName = item.scope.split('field:')[1];
-      const field = this.newType.fields.find((f: any) => f.name === fieldName);
+      const fields = this.newType.settings['Struct.Fields'] || [];
+      const field = fields.find((f: any) => f.name === fieldName);
       if (field) {
         const type = this.availableTypes.find(t => t.id === field.typeId);
         if (type) {
@@ -931,11 +949,16 @@ export class BBTypeBuilderComponent implements OnInit {
 
   // Field List Delegations
   onAddField() {
-    this.newType.fields.push({ name: '', typeId: 'String' });
+    if (!this.newType.settings['Struct.Fields']) {
+      this.newType.settings['Struct.Fields'] = [];
+    }
+    this.newType.settings['Struct.Fields'].push({ name: '', typeId: 'String' });
     this.emitPreview();
   }
   onRemoveField(index: number) {
-    this.newType.fields.splice(index, 1);
+    const fields = this.newType.settings['Struct.Fields'] || [];
+    fields.splice(index, 1);
+    this.newType.settings['Struct.Fields'] = fields;
     this.emitPreview();
   }
 
@@ -1281,14 +1304,13 @@ export class BBTypeBuilderComponent implements OnInit {
   }
 
   onNameChange() {
-    if (!this.newType.name) return;
-    // Simple auto-id: remove spaces, lowercase? User said "spaces removed", typically CamelCase or PascalCase for types.
-    // But usually IDs are somewhat technical.
-    // "Short Name ... default to Name with spaces removed"
-    // e.g. "My Type" -> "MyType"
-    if (!this.newType.id) {
-      this.newType.id = this.newType.name.replace(/\s+/g, '');
+    if (!this.newType.name) {
+      this.newType.id = '';
+      return;
     }
+    // Auto-generate ID from name by removing spaces
+    // e.g. "My Type" -> "MyType"
+    this.newType.id = this.newType.name.replace(/\s+/g, '');
   }
 
   getRuntimeOverrides(item: BBSettingListItem): any[] {

@@ -20,7 +20,7 @@ import { BBTypeService } from '../services/bb-type.service';
             [disabled]="isDisabled"
             class="std-select">
             <option [ngValue]="null">Select a Type...</option>
-            @for (opt of options; track opt.id) {
+            @for (opt of options; track $index) {
                 <option [value]="opt.id">{{ opt.name }}</option>
             }
          </select>
@@ -31,11 +31,14 @@ import { BBTypeService } from '../services/bb-type.service';
     :host { display: block; width: 100%; }
     .std-select {
         width: 100%;
-        padding: 6px;
+        padding: 4px 8px;
+        height: 24px;
         border: 1px solid #ccc;
         border-radius: 4px;
         font-family: inherit;
         font-size: 13px;
+        box-sizing: border-box;
+        outline: none;
     }
     .readonly-value {
         padding: 6px;

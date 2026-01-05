@@ -61,9 +61,9 @@ import { BBTypeService } from '../services/bb-type.service';
                                 [fieldName]="getFieldKey(field)">
                             </app-dynamic-field>
                         </div>
-                        <div class="width-debug">
+                        <!-- <div class="width-debug">
                             {{ getFieldMinWidth(field) }} - {{ getFieldMaxWidth(field) }}
-                        </div>
+                        </div> -->
                     </div>
                 }
             </div>
@@ -130,7 +130,7 @@ import { BBTypeService } from '../services/bb-type.service';
         display: flex; 
         flex-direction: column; 
         flex: 1; 
-        border: 1px solid #ddd; 
+        /* border: 1px solid #ddd; */
         padding: 4px; 
         border-radius: 3px;
         box-sizing: border-box;

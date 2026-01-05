@@ -69,6 +69,7 @@ import { AppConfig } from '../models/app-models';
                 <td>
                     @if (type.userDefined) {
                         <button class="edit-btn" (click)="requestEdit.emit(type)">✏️ Edit</button>
+                        <button class="test-btn" (click)="requestTest.emit(type)">🧪 Test</button>
                         <button 
                             class="delete-btn" 
                             [class.disabled]="isTypeRef(type.id)" 
@@ -79,9 +80,9 @@ import { AppConfig } from '../models/app-models';
                     }
                     @if (!type.userDefined) {
                          <button class="info-btn" (click)="requestEdit.emit(type)">ℹ️ Info</button>
-                    }
-                    @if (type.fieldBaseType || type.baseType === 'List' || type.baseType === 'Struct') {
-                        <button class="test-btn" (click)="requestTest.emit(type)">🧪 Test</button>
+                         @if (type.fieldBaseType || type.baseType === 'List' || type.baseType === 'Struct') {
+                             <button class="test-btn" (click)="requestTest.emit(type)">🧪 Test</button>
+                         }
                     }
                 </td>
                 </tr>
