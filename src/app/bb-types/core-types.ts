@@ -551,7 +551,7 @@ export const INITIAL_CORE_TYPES: BBType[] = [
         fieldBaseType: false, // Not directly usable as field, used via "Based On: Struct"
         settingDefinitions: [
             getTypeKindSetting(),
-            { id: 'Struct.Fields', name: 'Fields', typeId: 'List', subtypeId: 'BBField', noDelete: true },
+            { id: 'Struct.Fields', name: 'Fields', typeId: 'List', subtypeId: 'BBField' },
             { id: 'Type.Editors', name: 'Editors', typeId: 'List', subtypeId: 'BBEditor', mustOverride: true, noDelete: true }
         ],
         fields: [],
