@@ -53,11 +53,21 @@ export class BBTypeService {
             // "When the Person Type is created... system copies the Struct Editors Setting... default Vertical and Horizontal editors copied"
         };
 
-        // Adjust baseType property if inheriting
-        if (baseType.baseType === 'Struct') newType.baseType = 'Struct';
-        else if (baseType.baseType === 'List') newType.baseType = 'List';
-        else if (baseType.baseType === 'Core') {
-            newType.baseType = 'Basic'; // Or keep Core? 'Core' is usually system. 
+        // Adjust baseType property based on what we're inheriting from
+        // If inheriting from a base template (Struct, List, Dict), set baseType to that template name
+        if (baseTypeId === 'Struct' || baseType.id === 'Struct') {
+            newType.baseType = 'Struct';
+        } else if (baseTypeId === 'List' || baseType.id === 'List') {
+            newType.baseType = 'List';
+        } else if (baseTypeId === 'Dict' || baseType.id === 'Dict') {
+            newType.baseType = 'Dict';
+        } else if (baseType.baseType === 'Struct') {
+            newType.baseType = 'Struct';
+        } else if (baseType.baseType === 'List') {
+            newType.baseType = 'List';
+        } else if (baseType.baseType === 'Core' || baseType.baseType === null) {
+            // Core types or root types
+            newType.baseType = 'Basic';
             newType.subtypeId = baseType.id; // e.g. based on String
         }
 
