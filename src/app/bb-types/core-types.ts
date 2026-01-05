@@ -761,12 +761,51 @@ export const INITIAL_CORE_TYPES: BBType[] = [
             'Type.Kind': '0',
             'Type.Editor': 'VertEdit',
             'Struct.Fields': [
-                { name: 'Prompt', typeId: 'String' },
-                { name: 'TypeID', typeId: 'String' },
-                { name: 'FieldID', typeId: 'String' },
-                { name: 'Required', typeId: 'Boolean' },
-                { name: 'Group', typeId: 'Number' },
-                { name: 'Description', typeId: 'String' }
+                {
+                    name: 'Prompt',
+                    typeId: 'String',
+                    settings: {
+                        'String.MinVisible': 20,
+                        'String.MaxLen': 20
+                    }
+                },
+                {
+                    name: 'TypeID',
+                    typeId: 'String',
+                    settings: {
+                        'String.MinVisible': 20,
+                        'String.MaxLen': 20
+                    }
+                },
+                {
+                    name: 'FieldID',
+                    typeId: 'String',
+                    settings: {
+                        'String.MinVisible': 20,
+                        'String.MaxLen': 20
+                    }
+                },
+                {
+                    name: 'Required',
+                    typeId: 'Boolean'
+                },
+                {
+                    name: 'Group',
+                    typeId: 'Number',
+                    settings: {
+                        'Number.AllowNegative': false,
+                        'Number.AllowDecimals': false,
+                        'Number.MaxValue': 99
+                    }
+                },
+                {
+                    name: 'Description',
+                    typeId: 'String',
+                    settings: {
+                        'String.MinVisible': 5,
+                        'String.MaxLen': 150
+                    }
+                }
             ]
         },
         editors: [

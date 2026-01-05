@@ -143,8 +143,8 @@ import { calculateControlWidth } from './layout-helpers';
                                         </div>
                                     </div>
 
-                                    <!-- Inline Editor Area (for non-complex) -->
-                                    @if (!item.isComplex) {
+                                    <!-- Inline Editor Area (for non-complex, non-List) -->
+                                    @if (!item.isComplex && item.settingDef?.typeId !== 'List') {
                                          <div class="setting-editor-area">
                                              @if (item.id === 'Type.Editor') {
                                                  <select [(ngModel)]="item.value" class="std-input" (ngModelChange)="emitPreview()" [disabled]="isReadOnly">
@@ -163,13 +163,14 @@ import { calculateControlWidth } from './layout-helpers';
                                                         [isDisabled]="isReadOnly || !!item.readOnly"
                                                         [size]="'small'"
                                                         [settings]="item.settingDef && item.settingDef.values ? { 'Enum.Options': item.settingDef.values } : {}"
+                                                        [runtimeOverrides]="getRuntimeOverrides(item)"
                                                         (valueChange)="emitPreview()">
                                                    </app-dynamic-field>
                                                 </div>
                                              }
                                          </div>
                                     } @else {
-                                        <!-- Spacer for complex items -->
+                                        <!-- Spacer for complex items and Lists -->
                                         <div style="flex: 1;"></div>
                                     }
 
@@ -185,6 +186,23 @@ import { calculateControlWidth } from './layout-helpers';
                                     </div>
                                 </div>
 
+                                <!-- Non-complex Lists (render below label like complex items) -->
+                                @if (!item.isComplex && item.settingDef?.typeId === 'List') {
+                                    <div class="setting-complex-body">
+                                        <app-dynamic-field
+                                            [typeId]="item.settingDef?.typeId || 'List'"
+                                            [subtypeId]="item.settingDef?.subtypeId"
+                                            [appConfig]="appConfig"
+                                            [(value)]="item.value"
+                                            [mode]="'edit'"
+                                            [isDisabled]="isReadOnly"
+                                            [size]="'medium'"
+                                            [runtimeOverrides]="getRuntimeOverrides(item)"
+                                            (valueChange)="updateSettingListItem(item.id, $event)">
+                                        </app-dynamic-field>
+                                    </div>
+                                }
+
                                 <!-- Bottom Row: Complex Editor (if complex) -->
                                 @if (item.isComplex) {
                                     <div class="setting-complex-body">
@@ -198,10 +216,7 @@ import { calculateControlWidth } from './layout-helpers';
                                                 [mode]="'edit'"
                                                 [isDisabled]="isReadOnly"
                                                 [size]="'medium'"
-                                                [runtimeOverrides]="item.settingDef?.subtypeId === 'BBField' ? [
-                                                    { fieldName: '*', settingId: 'Type.Editor', value: 'HorzEdit' },
-                                                    { fieldName: '*', settingId: 'List.ShowHeaders', value: true }
-                                                ] : []"
+                                                [runtimeOverrides]="getRuntimeOverrides(item)"
                                                 (valueChange)="updateSettingListItem(item.id, $event)">
                                             </app-dynamic-field>
                                         } @else if (item.component === 'groups') {
@@ -527,6 +542,13 @@ export class BBTypeBuilderComponent implements OnInit {
   showAddDialog = false;
   showAddEditorDialog = false;
   showPropertiesDialog = false;
+
+  // Cache runtime overrides to prevent creating new arrays on every call
+  private readonly HORIZONTAL_EDITOR_OVERRIDES = [
+    { fieldName: '*', settingId: 'Type.Editor', value: 'HorzEdit' },
+    { fieldName: '*', settingId: 'List.CoreEdit.ShowHeaders', value: true }
+  ];
+  private readonly EMPTY_OVERRIDES: any[] = [];
 
   selectedField: BBField | null = null;
   fieldGroups: any[] = []; // Mock
@@ -1278,9 +1300,6 @@ export class BBTypeBuilderComponent implements OnInit {
       item.id === 'Struct.Fields' ||
       item.id === 'Type.Editors';
 
-    return useHorizontalEditor ? [
-      { fieldName: '*', settingId: 'Type.Editor', value: 'HorzEdit' },
-      { fieldName: '*', settingId: 'List.CoreEdit.ShowHeaders', value: true }
-    ] : [];
+    return useHorizontalEditor ? this.HORIZONTAL_EDITOR_OVERRIDES : this.EMPTY_OVERRIDES;
   }
 }

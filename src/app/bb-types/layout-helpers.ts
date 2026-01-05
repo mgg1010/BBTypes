@@ -1,7 +1,7 @@
 import { BBType, BBEditor } from '../models/bb-types';
 import { BBTypeService } from '../services/bb-type.service';
 
-const CHAR_WIDTH = 8;
+const CHAR_WIDTH = 7.25;
 const PADDING = 16;
 const ICON_WIDTH = 24;
 const CHECKBOX_WIDTH = 24;
@@ -18,7 +18,9 @@ export function calculateControlWidth(
 
     const baseId = editor.baseEditorId || 'unknown';
 
-    switch (baseId) {
+    const baseIdLower = baseId.toLowerCase();
+
+    switch (baseIdLower) {
         case 'number':
             return calcNumberWidth(settings);
         case 'string':
@@ -56,7 +58,7 @@ function calcNumberWidth(settings: Record<string, any>): { min: number; max: num
     const maxEnabled = settings['Number.MaxValueEnabled'] === true;
     const maxValue = settings['Number.MaxValue'];
 
-    if (maxEnabled && typeof maxValue === 'number') {
+    if ((maxEnabled || maxValue !== undefined) && typeof maxValue === 'number') {
         const digits = Math.floor(Math.log10(Math.abs(maxValue || 1))) + 1;
         maxChars += digits;
     } else {
@@ -77,14 +79,13 @@ function calcNumberWidth(settings: Record<string, any>): { min: number; max: num
 }
 
 function calcStringWidth(settings: Record<string, any>): { min: number; max: number } {
-    const minLen = settings['String.MinLen'] ?? 0;
-    const minPx = (minLen * CHAR_WIDTH) + PADDING;
+    const minVisible = settings['String.MinVisible'] ?? settings['String.MinLen'] ?? 0;
+    const maxLen = settings['String.MaxLen'];
 
-    // Max is usually infinite for text boxes unless restricted?
-    // User said: "Max Length gives us the min characters... convert to pixels, add the rest of the editor box size"
-    // Actually user said for String Editor: "Min Length gives us the min characters and we convert this to pixels"
-    // They didn't explicitly say how to calc Max pixels for string, but implied 1000 for infinite.
-    return { min: minPx, max: MAX_WIDTH_INFINITE };
+    const minPx = (minVisible * CHAR_WIDTH) + PADDING;
+    const maxPx = maxLen !== undefined ? (maxLen * CHAR_WIDTH) + PADDING : MAX_WIDTH_INFINITE;
+
+    return { min: minPx, max: maxPx };
 }
 
 function calcEnumWidth(type: BBType, settings: Record<string, any>): { min: number; max: number } {

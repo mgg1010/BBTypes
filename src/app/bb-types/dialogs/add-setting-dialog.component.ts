@@ -215,7 +215,7 @@ export class AddSettingDialogComponent {
 
                     // Force Type.Editor to be type-aware
                     if (merged.id === 'Type.Editor') {
-                        merged = { ...merged, typeId: 'typeeditor', subtypeId: this.selectedType };
+                        merged = { ...merged, typeId: 'TypeEditor', subtypeId: this.selectedType };
                     }
 
                     return merged;
@@ -224,7 +224,7 @@ export class AddSettingDialogComponent {
                 // Even if no specific definitions on type, we know Type.Editor should match the type
                 settings = settings.map(s => {
                     if (s.id === 'Type.Editor') {
-                        return { ...s, typeId: 'typeeditor', subtypeId: this.selectedType };
+                        return { ...s, typeId: 'TypeEditor', subtypeId: this.selectedType };
                     }
                     return s;
                 });

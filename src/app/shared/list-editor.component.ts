@@ -16,7 +16,7 @@ import { BBTypeService } from '../services/bb-type.service';
       <div class="list-items" (dragover)="onDragOver($event)" [style.gap.px]="itemGapPx">
         <!-- Header Row -->
         @if (hasHeaders && subtypeId) {
-             <div class="list-item header-row" style="background: #fafafa; border-bottom: 2px solid #eee;">
+             <div class="list-item header-row">
                 @if (showDragHandles) {
                     <div class="drag-handle" style="visibility: hidden;">⋮⋮</div>
                 }
@@ -32,7 +32,8 @@ import { BBTypeService } from '../services/bb-type.service';
                     [value]="{}"
                     [mode]="'edit'" 
                     [size]="size"
-                    [settings]="headerSettings">
+                    [settings]="headerSettings"
+                    [runtimeOverrides]="getHeaderRuntimeOverrides()">
                   </app-dynamic-field>
                 </div>
                  @if (!useSelection) {
@@ -155,6 +156,13 @@ import { BBTypeService } from '../services/bb-type.service';
     .list-item:last-child {
         border-bottom: none;
     }
+    
+    .header-row {
+        padding: 7px 8px 0 8px;
+        height: 15px;
+        border-bottom: none !important;
+        background: transparent !important;
+    }
 
     .list-item.dragging {
       opacity: 0.5;
@@ -168,6 +176,8 @@ import { BBTypeService } from '../services/bb-type.service';
       font-size: 18px;
       user-select: none;
       flex-shrink: 0;
+      align-self: center;
+      margin-top: -5px;  /* Fine-tune vertical centering */
     }
     .drag-handle:active {
         cursor: grabbing;
@@ -176,6 +186,8 @@ import { BBTypeService } from '../services/bb-type.service';
     .checkbox-wrapper {
         margin-right: 10px;
         flex-shrink: 0;
+        align-self: center;
+        margin-top: -5px;  /* Fine-tune vertical centering */
     }
 
     .item-editor {
@@ -317,28 +329,47 @@ export class ListEditorComponent implements IEditorComponent<any[]>, OnInit {
   }
 
   get hasHeaders(): boolean {
-    return !!this.settings['List.CoreEdit.HasHeaders'];
+    return !!this.settings['List.CoreEdit.ShowHeaders'];
   }
 
   get headerSettings(): Record<string, any> {
-    // Force Headers ON, and maybe ReadOnly to avoid editing the header row
-    return { ...this.settings, 'Struct.HorzEdit.ShowHeaders': true, 'Editor.ReadOnly': true };
+    return { ...this.settings };
   }
+
+  // Cached runtime override arrays - prevent creating new arrays on every call
+  private readonly HEADER_OVERRIDES = [
+    { fieldName: '*', settingId: 'Type.Editor', value: 'HorzEdit' },
+    { fieldName: '*', settingId: 'Struct.HorzEdit.ShowHeaders', value: true }
+  ];
+  private readonly HIDE_HEADERS_OVERRIDE = [
+    { fieldName: '*', settingId: 'Struct.HorzEdit.ShowHeaders', value: false }
+  ];
+  private itemOverridesCache = new Map<boolean, any[]>();
 
   constructor(private bbTypeService: BBTypeService) { }
 
+  getHeaderRuntimeOverrides(): any[] {
+    return this.HEADER_OVERRIDES;
+  }
+
   getItemRuntimeOverrides(index: number): any[] {
     const baseOverrides = this.runtimeOverrides || [];
+    const showHeaders = this.settings['List.CoreEdit.ShowHeaders'];
+    const cacheKey = !!showHeaders;
 
-    // Add showHeaders for first item if list has ShowHeaders setting
-    if (index === 0 && this.settings['List.ShowHeaders']) {
-      return [
-        ...baseOverrides,
-        { fieldName: '*', settingId: 'Struct.HorzEdit.ShowHeaders', value: true }
-      ];
+    // Check cache
+    if (this.itemOverridesCache.has(cacheKey)) {
+      return this.itemOverridesCache.get(cacheKey)!;
     }
 
-    return baseOverrides;
+    // Hide headers on ALL data rows - separate header row will show them
+    const result = showHeaders
+      ? [...baseOverrides, ...this.HIDE_HEADERS_OVERRIDE]
+      : baseOverrides;
+
+    // Cache result
+    this.itemOverridesCache.set(cacheKey, result);
+    return result;
   }
 
   ngOnInit() {
