@@ -150,6 +150,7 @@ export const INITIAL_CORE_TYPES: BBType[] = [
         settingDefinitions: [
             getTypeKindSetting(),
             { id: 'Type.Editors', name: 'Editors', typeId: 'List', subtypeId: 'BBEditor', mustOverride: true, noDelete: true },
+            { id: 'String.UpperCase', name: 'Upper Case', typeId: 'Boolean' },
             { id: 'String.MaxLength', name: 'Max Length', typeId: 'Number' },
             { id: 'String.MaxLengthMsg', name: 'Max Length Message', typeId: 'String' },
             { id: 'String.MinLength', name: 'Min Length', typeId: 'Number' },
@@ -180,8 +181,7 @@ export const INITIAL_CORE_TYPES: BBType[] = [
             },
             settingDefinitions: [
                 getTypeEditorSetting('String'),
-                ...getGlobalEditorSettings(),
-                { id: 'String.UpperCase', name: 'Upper Case', typeId: 'Boolean' }
+                ...getGlobalEditorSettings()
             ],
             overrides: []
         }]
