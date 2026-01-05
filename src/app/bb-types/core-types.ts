@@ -149,7 +149,12 @@ export const INITIAL_CORE_TYPES: BBType[] = [
         minLenMsg: 'Must be %d characters or more',
         settingDefinitions: [
             getTypeKindSetting(),
-            { id: 'Type.Editors', name: 'Editors', typeId: 'List', subtypeId: 'BBEditor', mustOverride: true, noDelete: true }
+            { id: 'Type.Editors', name: 'Editors', typeId: 'List', subtypeId: 'BBEditor', mustOverride: true, noDelete: true },
+            { id: 'String.MaxLength', name: 'Max Length', typeId: 'Number' },
+            { id: 'String.MaxLengthMsg', name: 'Max Length Message', typeId: 'String' },
+            { id: 'String.MinLength', name: 'Min Length', typeId: 'Number' },
+            { id: 'String.MinLengthMsg', name: 'Min Length Message', typeId: 'String' },
+            { id: 'String.ValidationRules', name: 'Validation Rules', typeId: 'String.ValidationRules' }
         ],
         settings: {
             'Type.Kind': '0',
@@ -176,12 +181,7 @@ export const INITIAL_CORE_TYPES: BBType[] = [
             settingDefinitions: [
                 getTypeEditorSetting('String'),
                 ...getGlobalEditorSettings(),
-                { id: 'String.UpperCase', name: 'Upper Case', typeId: 'Boolean' },
-                { id: 'String.MaxLength', name: 'Max Length', typeId: 'Number' },
-                { id: 'String.MaxLengthMsg', name: 'Max Length Message', typeId: 'String' },
-                { id: 'String.MinLength', name: 'Min Length', typeId: 'Number' },
-                { id: 'String.MinLengthMsg', name: 'Min Length Message', typeId: 'String' },
-                { id: 'String.ValidationRules', name: 'Validation Rules', typeId: 'String.ValidationRules' }
+                { id: 'String.UpperCase', name: 'Upper Case', typeId: 'Boolean' }
             ],
             overrides: []
         }]
