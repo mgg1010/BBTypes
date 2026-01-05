@@ -773,6 +773,16 @@ export class BBTypeBuilderComponent implements OnInit {
     allDefs.forEach(def => {
       if (handledIds.includes(def.id)) return;
 
+      // Only add settings that are:
+      // 1. Explicitly set in newType.settings, OR
+      // 2. Have mustOverride flag (always shown)
+      const isExplicitlySet = this.newType.settings && this.newType.settings[def.id] !== undefined;
+      const isMustOverride = def.mustOverride;
+
+      if (!isExplicitlySet && !isMustOverride) {
+        return; // Skip this setting - it's available but not added yet
+      }
+
       // Determine value: 
       // 1. Check newType.settings (override)
       // 2. Check default value from def
