@@ -55,7 +55,19 @@ export class EditorRegistryService {
     }
 
     async getComponent(id: string): Promise<Type<any> | null> {
-        const entry = this.registry.get(id);
+        let entry = this.registry.get(id);
+
+        // Fallback: Case-insensitive lookup (fixes issues where 'list' is requested but 'List' is registered)
+        if (!entry) {
+            const lowerId = id.toLowerCase();
+            for (const [key, value] of this.registry.entries()) {
+                if (key.toLowerCase() === lowerId) {
+                    entry = value;
+                    break;
+                }
+            }
+        }
+
         if (!entry) return null;
 
         if (entry.kind === 'eager') {

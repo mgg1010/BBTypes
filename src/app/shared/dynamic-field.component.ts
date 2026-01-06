@@ -154,7 +154,13 @@ export class DynamicFieldComponent implements OnChanges {
             ? [...this.bbTypeService.getTypes().filter(t => !t.userDefined), ...this.appConfig.types]
             : this.bbTypeService.getTypes();
 
-        const baseType = types.find(t => t.id === this.typeId);
+        let baseType = types.find(t => t.id === this.typeId);
+
+        // Fallback: Case-insensitive lookup (fixes issues where 'string' is requested but 'String' is defined)
+        if (!baseType) {
+            baseType = types.find(t => t.id.toLowerCase() === this.typeId.toLowerCase());
+        }
+
         if (!baseType) {
             this.error = `Type not found: ${this.typeId}`;
             return;
