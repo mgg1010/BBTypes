@@ -562,7 +562,7 @@ export class BBTypeBuilderComponent implements OnInit {
 
   newType: any = { name: '', baseType: 'Struct', editors: [] };
   basedOnType = 'struct';
-  hasUserMadeChanges = false; // Track if user has modified anything
+  initialTypeSnapshot = ''; // JSON snapshot for change detection
   activeTab = 'def'; // 'def', 'pub', 'over', 'editor_ID'
 
   settingsList: BBSettingListItem[] = [];
@@ -716,6 +716,9 @@ export class BBTypeBuilderComponent implements OnInit {
     }
 
     this.initializeSettingsList();
+
+    // Capture initial state for change detection
+    this.captureSnapshot();
   }
 
   get getExistingEditorSettingsForDialog() {
@@ -841,12 +844,23 @@ export class BBTypeBuilderComponent implements OnInit {
     });
   }
 
+  captureSnapshot() {
+    // Create JSON snapshot of current type state
+    this.initialTypeSnapshot = JSON.stringify(this.newType);
+  }
+
+  hasTypeChanged(): boolean {
+    // Compare current state to snapshot
+    const currentSnapshot = JSON.stringify(this.newType);
+    return currentSnapshot !== this.initialTypeSnapshot;
+  }
+
   onBasedOnChange() {
-    // Warn if user has made any changes
-    if (this.hasUserMadeChanges) {
+    // Warn if type has been modified
+    if (this.hasTypeChanged()) {
       const confirmed = confirm('Changing the base type will reset all settings and changes. Continue?');
       if (!confirmed) {
-        // Revert the dropdown
+        // Revert the dropdown to match current type
         const currentBaseType = this.newType.baseType;
         if (currentBaseType === 'Struct') this.basedOnType = 'struct';
         else if (currentBaseType === 'List') this.basedOnType = 'list';
@@ -884,14 +898,13 @@ export class BBTypeBuilderComponent implements OnInit {
 
     this.initializeSettingsList();
 
-    // Reset the change flag since we've recreated the type
-    this.hasUserMadeChanges = false;
+    // Capture new snapshot after recreation
+    this.captureSnapshot();
 
     this.emitPreview();
   }
 
   onAddSetting(event: { setting: BBSettingDefinition, scope?: { field?: string, type?: string }, defaultValue?: any }) {
-    this.hasUserMadeChanges = true;
     this.showAddDialog = false;
 
     let headerLabel = 'Type Settings';
@@ -959,7 +972,7 @@ export class BBTypeBuilderComponent implements OnInit {
   }
 
   removeSetting(index: number) {
-    this.hasUserMadeChanges = true;
+
     const item = this.settingsList[index];
     this.settingsList.splice(index, 1);
 
