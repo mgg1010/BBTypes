@@ -54,17 +54,21 @@ export class BBTypeService {
         };
 
         // Adjust baseType property based on what we're inheriting from
-        // If inheriting from a base template (Struct, List, Dict), set baseType to that template name
+        // If inheriting from a base template (Struct, List, Dict, Enum), set baseType to that template name
         if (baseTypeId === 'Struct' || baseType.id === 'Struct') {
             newType.baseType = 'Struct';
         } else if (baseTypeId === 'List' || baseType.id === 'List') {
             newType.baseType = 'List';
         } else if (baseTypeId === 'Dict' || baseType.id === 'Dict') {
             newType.baseType = 'Dict';
+        } else if (baseTypeId === 'Enum' || baseType.id === 'Enum') {
+            newType.baseType = 'Enum';
         } else if (baseType.baseType === 'Struct') {
             newType.baseType = 'Struct';
         } else if (baseType.baseType === 'List') {
             newType.baseType = 'List';
+        } else if (baseType.baseType === 'Enum') {
+            newType.baseType = 'Enum';
         } else if (baseType.baseType === 'Core' || baseType.baseType === null) {
             // Core types or root types
             newType.baseType = 'Basic';

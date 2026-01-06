@@ -444,7 +444,7 @@ export const INITIAL_CORE_TYPES: BBType[] = [
         values: [], // Default empty options
         settingDefinitions: [
             getTypeKindSetting(),
-            { id: 'Enum.Options', name: 'Options', typeId: 'List', subtypeId: 'IDString' },
+            { id: 'Enum.Options', name: 'Options', typeId: 'List', subtypeId: 'IDString', mustOverride: true, noDelete: true },
             { id: 'Type.Editors', name: 'Editors', typeId: 'List', subtypeId: 'BBEditor', mustOverride: true, noDelete: true }
         ],
         settings: {
