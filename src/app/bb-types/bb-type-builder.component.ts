@@ -822,12 +822,51 @@ export class BBTypeBuilderComponent implements OnInit {
   }
 
   onBasedOnChange() {
-    if (this.basedOnType === 'struct') {
-      this.newType.baseType = 'Struct';
-    } else {
-      this.newType.baseType = 'Basic';
-      this.newType.subtypeId = 'string';
+    // Check if user has made changes to settings
+    const hasChanges = this.settingsList.some(item =>
+      item.type === 'setting' &&
+      item.removable === true // User-added settings
+    );
+
+    if (hasChanges) {
+      const confirmed = confirm('Changing the base type will delete any settings you have added. Continue?');
+      if (!confirmed) {
+        // Revert the dropdown
+        const currentBaseType = this.newType.baseType;
+        if (currentBaseType === 'Struct') this.basedOnType = 'struct';
+        else if (currentBaseType === 'List') this.basedOnType = 'list';
+        else if (currentBaseType === 'Enum') this.basedOnType = 'enum';
+        else if (currentBaseType === 'Basic') this.basedOnType = 'string';
+        return;
+      }
     }
+
+    // Map dropdown value to type ID
+    let baseTypeId = 'Struct'; // default
+    if (this.basedOnType === 'struct') baseTypeId = 'Struct';
+    else if (this.basedOnType === 'list') baseTypeId = 'List';
+    else if (this.basedOnType === 'enum') baseTypeId = 'Enum';
+    else if (this.basedOnType === 'string') baseTypeId = 'String';
+
+    // Preserve name and ID
+    const currentName = this.newType.name;
+    const currentId = this.newType.id;
+
+    // Recreate the type using the service
+    this.newType = this.bbTypeService.createNewType(baseTypeId, currentName);
+    this.newType.id = currentId;
+
+    // Reinitialize editors and settings
+    const baseKind = this.newType.baseType;
+    const subtypeId = this.newType.subtypeId;
+    this.availableEditors = this.bbTypeService.getDefaultEditorsForBase(baseKind, subtypeId);
+
+    if (this.availableEditors.length > 0) {
+      this.baseEditor = this.availableEditors[0];
+    } else {
+      this.baseEditor = { id: '__sys_default__', name: 'Default Editor' };
+    }
+
     this.initializeSettingsList();
     this.emitPreview();
   }
