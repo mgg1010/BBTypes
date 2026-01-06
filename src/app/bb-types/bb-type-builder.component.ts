@@ -110,7 +110,7 @@ import { BBTypeBuilderService } from './services/bb-type-builder.service';
                                 [newType]="newType" 
                                 [isReadOnly]="isReadOnly"
                                 [selectableTypes]="selectableTypes"
-                                [appConfig]="appConfig"
+                                [appConfig]="appConfigWithOverrides"
                                 (requestShortNameFocus)="switchToDefAndFocus()">
                             </app-published-settings-tab>
                         </div>
@@ -158,7 +158,7 @@ import { BBTypeBuilderService } from './services/bb-type-builder.service';
                                                    <app-dynamic-field
                                                         [typeId]="item.settingDef?.typeId || 'String'"
                                                         [subtypeId]="item.settingDef?.subtypeId"
-                                                        [appConfig]="appConfig"
+                                                        [appConfig]="appConfigWithOverrides"
                                                         [(value)]="item.value"
                                                         [mode]="'edit'"
                                                         [isDisabled]="isReadOnly || !!item.readOnly"
@@ -193,7 +193,7 @@ import { BBTypeBuilderService } from './services/bb-type-builder.service';
                                         <app-dynamic-field
                                             [typeId]="item.settingDef?.typeId || 'List'"
                                             [subtypeId]="item.settingDef?.subtypeId"
-                                            [appConfig]="appConfig"
+                                            [appConfig]="appConfigWithOverrides"
                                             [(value)]="item.value"
                                             [mode]="'edit'"
                                             [isDisabled]="isReadOnly"
@@ -212,7 +212,7 @@ import { BBTypeBuilderService } from './services/bb-type-builder.service';
                                             <app-dynamic-field
                                                 [typeId]="item.settingDef?.typeId || 'List'"
                                                 [subtypeId]="item.settingDef?.subtypeId"
-                                                [appConfig]="appConfig"
+                                                [appConfig]="appConfigWithOverrides"
                                                 [(value)]="item.value"
                                                 [mode]="'edit'"
                                                 [isDisabled]="isReadOnly"
@@ -333,7 +333,7 @@ import { BBTypeBuilderService } from './services/bb-type-builder.service';
                                     [newType]="newType" 
                                     [isReadOnly]="isReadOnly || isEditorTabReadOnly(activeTab)"
                                     [selectableTypes]="selectableTypes"
-                                    [appConfig]="appConfig"
+                                    [appConfig]="appConfigWithOverrides"
                                     [prefixOverride]="getEditorPrefix(activeTab)">
                                 </app-published-settings-tab>
                             </div>
@@ -357,7 +357,7 @@ import { BBTypeBuilderService } from './services/bb-type-builder.service';
                                                     <app-dynamic-field
                                                         [typeId]="item.settingDef?.typeId || 'String'"
                                                         [subtypeId]="item.settingDef?.subtypeId"
-                                                        [appConfig]="appConfig"
+                                                        [appConfig]="appConfigWithOverrides"
                                                         [(value)]="item.value"
                                                         [mode]="'edit'"
                                                         [isDisabled]="isEditorTabReadOnly(activeTab) || !!item.readOnly || isReadOnly"
@@ -390,7 +390,7 @@ import { BBTypeBuilderService } from './services/bb-type-builder.service';
             <app-add-setting-dialog
                 [currentType]="newType"
                 [existingSettings]="existingSettingsForDialog"
-                [appConfig]="appConfig"
+                [appConfig]="appConfigWithOverrides"
                 (cancel)="showAddDialog = false"
                 (add)="onAddSetting($event)">
             </app-add-setting-dialog>
@@ -401,7 +401,7 @@ import { BBTypeBuilderService } from './services/bb-type-builder.service';
                 [currentType]="newType"
                 [currentEditor]="currentEditorForDialog"
                 [existingSettings]="getExistingEditorSettingsForDialog"
-                [appConfig]="appConfig"
+                [appConfig]="appConfigWithOverrides"
                 (cancel)="showAddEditorDialog = false"
                 (add)="onAddEditorSetting($event)">
             </app-add-editor-setting-dialog>
@@ -411,7 +411,7 @@ import { BBTypeBuilderService } from './services/bb-type-builder.service';
             <app-show-all-properties-dialog
                 [type]="newType"
                 [baseEditor]="baseEditor"
-                [appConfig]="appConfig"
+                [appConfig]="appConfigWithOverrides"
                 (cancel)="showPropertiesDialog = false">
             </app-show-all-properties-dialog>
         }
@@ -526,6 +526,23 @@ export class BBTypeBuilderComponent implements OnInit {
   @Input() isAnonymousMode = false;
   @Input() editingType: BBType | null = null;
   @Input() appConfig: AppConfig | null = null;
+
+  // Override appConfig to force all List types to use HorzEdit
+  get appConfigWithOverrides(): AppConfig | null {
+    if (!this.appConfig) return null;
+
+    const config: any = {
+      ...this.appConfig,
+      typeOverrides: {
+        ...(this.appConfig as any).typeOverrides,
+        'List': {
+          ...((this.appConfig as any).typeOverrides?.['List'] || {}),
+          'Type.Editor': 'HorzEdit'
+        }
+      }
+    };
+    return config;
+  }
 
   isCustomSettingsOpen = false;
   isCustomSettingsOpenMap: Map<string, boolean> = new Map();
