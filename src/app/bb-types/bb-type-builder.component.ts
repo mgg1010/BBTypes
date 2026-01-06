@@ -531,12 +531,19 @@ export class BBTypeBuilderComponent implements OnInit {
   @Input() editingType: BBType | null = null;
   @Input() appConfig: AppConfig | null = null;
 
-  // Runtime overrides for this component - force all Lists to use HorzEdit
+  // Runtime overrides for this component - force all Lists to use HorzEdit with headers
   typeBuilderOverrides = [
     {
+      fieldName: '*',
       typeId: 'List',
       settingId: 'Type.Editor',
       value: 'HorzEdit'
+    },
+    {
+      fieldName: '*',
+      typeId: 'List',
+      settingId: 'Struct.HorzEdit.ShowHeaders',
+      value: true
     }
   ];
 
