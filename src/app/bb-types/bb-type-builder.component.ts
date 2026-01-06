@@ -542,7 +542,7 @@ export class BBTypeBuilderComponent implements OnInit {
     {
       fieldName: '*',
       typeId: 'List',
-      settingId: 'Struct.HorzEdit.ShowHeaders',
+      settingId: 'List.CoreEdit.HasHeaders',
       value: true
     }
   ];
