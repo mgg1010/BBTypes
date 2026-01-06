@@ -542,7 +542,7 @@ export class BBTypeBuilderComponent implements OnInit {
     {
       fieldName: '*',
       typeId: 'List',
-      settingId: 'List.CoreEdit.HasHeaders',
+      settingId: 'List.CoreEdit.ShowHeaders',
       value: true
     }
   ];
