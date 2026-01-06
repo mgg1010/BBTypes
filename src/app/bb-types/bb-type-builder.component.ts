@@ -544,6 +544,12 @@ export class BBTypeBuilderComponent implements OnInit {
       typeId: 'List',
       settingId: 'List.CoreEdit.ShowHeaders',
       value: true
+    },
+    {
+      fieldName: '*',
+      typeId: 'List',
+      settingId: 'List.CoreEdit.RowSelection',
+      value: false
     }
   ];
 

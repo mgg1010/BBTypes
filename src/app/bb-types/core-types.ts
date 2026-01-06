@@ -498,7 +498,7 @@ export const INITIAL_CORE_TYPES: BBType[] = [
                 'Type.Editor': 'published',
                 'List.CoreEdit.ShowDragHandles': 'published',
                 'List.CoreEdit.RowSelection': 'published',
-                'List.CoreEdit.HasHeaders': 'published',
+                'List.CoreEdit.ShowHeaders': 'published',
                 'Editor.ReadOnly': 'published',
                 'Editor.Locale': 'published',
                 'Editor.StdFont': 'published',
@@ -509,7 +509,7 @@ export const INITIAL_CORE_TYPES: BBType[] = [
                 ...getGlobalEditorSettings(),
                 { id: 'List.CoreEdit.ShowDragHandles', name: 'Show Drag Handles', typeId: 'Boolean', description: 'Show drag handles for reordering. Automatically hidden if List is not ordered.' },
                 { id: 'List.CoreEdit.RowSelection', name: 'Row Selection', typeId: 'Boolean', description: 'If true: show checkboxes + bottom trash can. If false: show per-row trash can.' },
-                { id: 'List.CoreEdit.HasHeaders', name: 'Has Headers', typeId: 'Boolean', description: 'If true, instructs the editor to draw headers by temporarily using Horizontal Editor ShowHeaders logic.' }
+                { id: 'List.CoreEdit.ShowHeaders', name: 'Show Headers', typeId: 'Boolean', description: 'If true, show headers for the first row using the horizontal struct editor logic.' }
             ],
             overrides: []
         }]
