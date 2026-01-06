@@ -562,6 +562,7 @@ export class BBTypeBuilderComponent implements OnInit {
 
   newType: any = { name: '', baseType: 'Struct', editors: [] };
   basedOnType = 'struct';
+  hasUserMadeChanges = false; // Track if user has modified anything
   activeTab = 'def'; // 'def', 'pub', 'over', 'editor_ID'
 
   settingsList: BBSettingListItem[] = [];
@@ -841,14 +842,9 @@ export class BBTypeBuilderComponent implements OnInit {
   }
 
   onBasedOnChange() {
-    // Check if user has made changes to settings
-    const hasChanges = this.settingsList.some(item =>
-      item.type === 'setting' &&
-      item.removable === true // User-added settings
-    );
-
-    if (hasChanges) {
-      const confirmed = confirm('Changing the base type will delete any settings you have added. Continue?');
+    // Warn if user has made any changes
+    if (this.hasUserMadeChanges) {
+      const confirmed = confirm('Changing the base type will reset all settings and changes. Continue?');
       if (!confirmed) {
         // Revert the dropdown
         const currentBaseType = this.newType.baseType;
@@ -887,10 +883,15 @@ export class BBTypeBuilderComponent implements OnInit {
     }
 
     this.initializeSettingsList();
+
+    // Reset the change flag since we've recreated the type
+    this.hasUserMadeChanges = false;
+
     this.emitPreview();
   }
 
   onAddSetting(event: { setting: BBSettingDefinition, scope?: { field?: string, type?: string }, defaultValue?: any }) {
+    this.hasUserMadeChanges = true;
     this.showAddDialog = false;
 
     let headerLabel = 'Type Settings';
@@ -958,6 +959,7 @@ export class BBTypeBuilderComponent implements OnInit {
   }
 
   removeSetting(index: number) {
+    this.hasUserMadeChanges = true;
     const item = this.settingsList[index];
     this.settingsList.splice(index, 1);
 
